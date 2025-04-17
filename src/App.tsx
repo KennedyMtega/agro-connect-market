@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -14,6 +15,24 @@ import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
 import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
+import MyOrders from "./pages/MyOrders";
+import OrderTracking from "./pages/OrderTracking";
+import { useAuth } from "@/context/AuthContext";
+
+// Redirect component that checks user type and redirects accordingly
+const RedirectBasedOnRole = () => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Index />;
+  }
+  
+  return user.userType === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
+};
 
 const queryClient = new QueryClient();
 
@@ -26,8 +45,10 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Landing page now redirects based on user role */}
+              <Route path="/" element={<RedirectBasedOnRole />} />
+              
               {/* Public routes */}
-              <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-phone" element={<VerifyPhone />} />
@@ -38,6 +59,22 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredUserType="buyer">
                     <Search />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-orders" 
+                element={
+                  <ProtectedRoute requiredUserType="buyer">
+                    <MyOrders />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/order/:id/tracking" 
+                element={
+                  <ProtectedRoute requiredUserType="buyer">
+                    <OrderTracking />
                   </ProtectedRoute>
                 } 
               />

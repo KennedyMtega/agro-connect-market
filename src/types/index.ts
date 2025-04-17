@@ -1,4 +1,3 @@
-
 // User Types
 export type UserType = 'buyer' | 'seller';
 
@@ -35,17 +34,24 @@ export interface SellerProfile {
 // Crop Types
 export interface Crop {
   id: string;
-  sellerId: string;
   name: string;
   description?: string;
   category: string;
   pricePerUnit: number;
-  unit: string;
+  unit: string; // kg, ear, bushel, etc.
   quantityAvailable: number;
-  images: string[];
-  locationId?: string;
-  isFeatured: boolean;
-  createdAt: Date;
+  sellerId?: string;
+  sellerName?: string;
+  images?: string[];
+  isOrganic?: boolean;
+  harvestDate?: Date;
+  location?: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+    address: string;
+  };
 }
 
 // Location Types
@@ -69,23 +75,62 @@ export interface Order {
   id: string;
   buyerId: string;
   sellerId: string;
+  items: OrderItem[];
   status: 'pending' | 'confirmed' | 'in_transit' | 'delivered' | 'cancelled';
   totalAmount: number;
   deliveryFee: number;
-  commissionFee: number;
-  deliveryAddressId: string;
+  deliveryAddress: {
+    address: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
   createdAt: Date;
-  updatedAt: Date;
-  items: OrderItem[];
+  estimatedDelivery?: Date;
+  tracking?: OrderTracking;
 }
 
 export interface OrderItem {
   id: string;
-  orderId: string;
   cropId: string;
+  cropName: string;
   quantity: number;
-  unitPrice: number;
+  unit: string;
+  pricePerUnit: number;
   totalPrice: number;
+}
+
+export interface OrderTracking {
+  currentStatus: string;
+  lastUpdate: Date;
+  driver?: {
+    id: string;
+    name: string;
+    phone: string;
+    avatar?: string;
+    vehicle: {
+      make: string;
+      model: string;
+      color: string;
+      plate: string;
+    };
+  };
+  currentLocation?: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+    address?: string;
+    distanceToDestination?: number;
+    estimatedTimeOfArrival?: Date;
+  };
+  timeline: {
+    status: string;
+    time: Date;
+    completed: boolean;
+    current?: boolean;
+  }[];
 }
 
 // Authentication Types
