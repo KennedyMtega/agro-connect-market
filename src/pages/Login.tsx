@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -66,6 +68,16 @@ const Login = () => {
     }
   };
 
+  const setDummyBuyerCredentials = () => {
+    setEmail("buyer@example.com");
+    setPassword("buyerpass");
+  };
+
+  const setDummySellerCredentials = () => {
+    setEmail("seller@example.com");
+    setPassword("sellerpass");
+  };
+
   return (
     <Layout>
       <div className="container max-w-md py-12">
@@ -77,6 +89,35 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <Alert className="mb-4 bg-amber-50 text-amber-800 border-amber-200">
+              <InfoIcon className="h-4 w-4 mr-2" />
+              <AlertDescription>
+                <p className="font-medium mb-2">Test Credentials:</p>
+                <p className="text-sm mb-1">
+                  <strong>Buyer:</strong> buyer@example.com / buyerpass
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="p-0 h-auto ml-1 text-blue-600" 
+                    onClick={setDummyBuyerCredentials}
+                  >
+                    (Apply)
+                  </Button>
+                </p>
+                <p className="text-sm">
+                  <strong>Seller:</strong> seller@example.com / sellerpass
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="p-0 h-auto ml-1 text-blue-600" 
+                    onClick={setDummySellerCredentials}
+                  >
+                    (Apply)
+                  </Button>
+                </p>
+              </AlertDescription>
+            </Alert>
+
             <Tabs defaultValue="email" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="email">Email</TabsTrigger>

@@ -59,11 +59,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (mockUser) {
           const userData = JSON.parse(mockUser);
-          setState({
-            ...state,
-            user: userData,
-            isLoading: false,
-          });
+          
+          // If the user is a buyer, create a mock buyer profile
+          if (userData.userType === "buyer") {
+            setState({
+              ...state,
+              user: userData,
+              buyerProfile: {
+                id: `buyer-${userData.id}`,
+                userId: userData.id,
+                deliveryPreferences: {},
+                paymentMethods: {},
+                notificationPreferences: {},
+              },
+              isLoading: false,
+            });
+          } 
+          // If the user is a seller, create a mock seller profile
+          else if (userData.userType === "seller") {
+            setState({
+              ...state,
+              user: userData,
+              sellerProfile: {
+                id: `seller-${userData.id}`,
+                userId: userData.id,
+                businessName: "Farm Fresh Produce",
+                businessDescription: "Local organic farm produce",
+                verificationStatus: 'verified',
+                averageRating: 4.5,
+                totalRatings: 27,
+              },
+              isLoading: false,
+            });
+          } else {
+            setState({
+              ...state,
+              user: userData,
+              isLoading: false,
+            });
+          }
         } else {
           setState({
             ...state,
@@ -86,25 +120,82 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock login - would be replaced with actual API call
-      // This is just for demonstration purposes
-      const mockUser: User = {
-        id: "user-123",
-        email,
-        fullName: "Demo User",
-        userType: "buyer", // Default to buyer
-        isPhoneVerified: false,
-        preferredAuthMethod: "email",
-        createdAt: new Date(),
-      };
+      // Handle our dummy credentials
+      let mockUser: User;
+      
+      if (email === "buyer@example.com" && password === "buyerpass") {
+        mockUser = {
+          id: "buyer-123",
+          email: "buyer@example.com",
+          fullName: "John Buyer",
+          userType: "buyer",
+          isPhoneVerified: true,
+          preferredAuthMethod: "email",
+          createdAt: new Date(),
+        };
+      } else if (email === "seller@example.com" && password === "sellerpass") {
+        mockUser = {
+          id: "seller-456",
+          email: "seller@example.com",
+          fullName: "Jane Seller",
+          userType: "seller",
+          isPhoneVerified: true,
+          preferredAuthMethod: "email",
+          createdAt: new Date(),
+        };
+      } else {
+        // For demo purposes, default to buyer if credentials don't match our specific test ones
+        mockUser = {
+          id: "user-" + Math.random().toString(36).substring(7),
+          email,
+          fullName: "Demo User",
+          userType: "buyer",
+          isPhoneVerified: false,
+          preferredAuthMethod: "email",
+          createdAt: new Date(),
+        };
+      }
 
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
-      setState({
-        ...state,
-        user: mockUser,
-        isLoading: false,
-      });
+      // If the user is a buyer, create a mock buyer profile
+      if (mockUser.userType === "buyer") {
+        setState({
+          ...state,
+          user: mockUser,
+          buyerProfile: {
+            id: `buyer-${mockUser.id}`,
+            userId: mockUser.id,
+            deliveryPreferences: {},
+            paymentMethods: {},
+            notificationPreferences: {},
+          },
+          isLoading: false,
+        });
+      } 
+      // If the user is a seller, create a mock seller profile
+      else if (mockUser.userType === "seller") {
+        setState({
+          ...state,
+          user: mockUser,
+          sellerProfile: {
+            id: `seller-${mockUser.id}`,
+            userId: mockUser.id,
+            businessName: "Farm Fresh Produce",
+            businessDescription: "Local organic farm produce",
+            verificationStatus: 'verified',
+            averageRating: 4.5,
+            totalRatings: 27,
+          },
+          isLoading: false,
+        });
+      } else {
+        setState({
+          ...state,
+          user: mockUser,
+          isLoading: false,
+        });
+      }
     } catch (error) {
       setState({
         ...state,
