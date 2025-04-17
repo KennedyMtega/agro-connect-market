@@ -17,6 +17,9 @@ import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 import MyOrders from "./pages/MyOrders";
 import OrderTracking from "./pages/OrderTracking";
+import Profile from "./pages/Profile";
+import Cart from "./pages/Cart";
+import SellerOrders from "./pages/SellerOrders";
 import { useAuth } from "@/context/AuthContext";
 
 // Redirect component that checks user type and redirects accordingly
@@ -78,6 +81,14 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/cart" 
+                element={
+                  <ProtectedRoute requiredUserType="buyer">
+                    <Cart />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Seller routes */}
               <Route 
@@ -93,6 +104,24 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredUserType="seller">
                     <Inventory />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/seller-orders" 
+                element={
+                  <ProtectedRoute requiredUserType="seller">
+                    <SellerOrders />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Shared routes (both user types) */}
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 } 
               />

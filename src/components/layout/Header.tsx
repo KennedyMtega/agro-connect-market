@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import Notifications from "@/components/Notifications";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -79,7 +80,7 @@ const Header = () => {
                         <Truck className="h-4 w-4" />
                         My Orders
                       </Link>
-                      <div className="flex items-center gap-2 py-2 relative">
+                      <Link to="/cart" className="flex items-center gap-2 py-2 relative">
                         <ShoppingCart className="h-4 w-4" />
                         My Cart
                         {totalItems > 0 && (
@@ -87,7 +88,11 @@ const Header = () => {
                             {totalItems}
                           </Badge>
                         )}
-                      </div>
+                      </Link>
+                      <Link to="/profile" className="flex items-center gap-2 py-2">
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Link>
                     </>
                   ) : (
                     <>
@@ -102,6 +107,10 @@ const Header = () => {
                       <Link to="/seller-orders" className="flex items-center gap-2 py-2">
                         <Truck className="h-4 w-4" />
                         Orders
+                      </Link>
+                      <Link to="/profile" className="flex items-center gap-2 py-2">
+                        <User className="h-4 w-4" />
+                        Profile
                       </Link>
                     </>
                   )}
@@ -128,7 +137,7 @@ const Header = () => {
                 <Truck className="h-4 w-4" />
                 My Orders
               </Link>
-              <Link to="#" className="text-sm font-medium hover:text-primary relative">
+              <Link to="/cart" className="text-sm font-medium hover:text-primary relative">
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
                   <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -168,10 +177,7 @@ const Header = () => {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
-              </Button>
+              <Notifications />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -208,14 +214,26 @@ const Header = () => {
                           My Orders
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link to="/cart" className="flex items-center w-full">
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          My Cart
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   {isSeller && (
                     <>
                       <DropdownMenuItem>
-                        <Link to="/analytics" className="flex items-center w-full">
+                        <Link to="/seller-orders" className="flex items-center w-full">
+                          <Truck className="mr-2 h-4 w-4" />
+                          Orders
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link to="/inventory" className="flex items-center w-full">
                           <Store className="mr-2 h-4 w-4" />
-                          Analytics
+                          Inventory
                         </Link>
                       </DropdownMenuItem>
                     </>
