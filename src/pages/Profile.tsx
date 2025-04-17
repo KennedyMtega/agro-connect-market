@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Phone, Mail, Calendar, Check, User, Navigation } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,10 +18,12 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [profileForm, setProfileForm] = useState({
     fullName: user?.fullName || "",
     email: user?.email || "",
     phoneNumber: user?.phoneNumber || "",
+    address: user?.userType === "buyer" ? buyerProfile?.deliveryPreferences?.defaultAddress || "" : "",
   });
 
   const isBuyer = user?.userType === "buyer";
@@ -43,6 +46,46 @@ const Profile = () => {
       .toUpperCase();
   };
 
+  const useCurrentLocation = () => {
+    setIsLoadingLocation(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Geolocation not supported",
+        description: "Your browser doesn't support geolocation.",
+        variant: "destructive",
+      });
+      setIsLoadingLocation(false);
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // In a real app, we would use reverse geocoding to get the address
+        setProfileForm({
+          ...profileForm,
+          address: "Current Location (Automatic Detection)",
+        });
+        
+        toast({
+          title: "Location Updated",
+          description: "Your current location has been set as your default address.",
+        });
+        
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        toast({
+          title: "Location Error",
+          description: "Couldn't get your current location. Please enter manually.",
+          variant: "destructive",
+        });
+        setIsLoadingLocation(false);
+      }
+    );
+  };
+
   return (
     <Layout>
       <div className="container py-6">
@@ -57,29 +100,52 @@ const Profile = () => {
                   <AvatarFallback>{user?.fullName ? getInitials(user.fullName) : 'U'}</AvatarFallback>
                 </Avatar>
                 <CardTitle>{user?.fullName}</CardTitle>
-                <CardDescription>{user?.userType.charAt(0).toUpperCase() + user?.userType.slice(1)}</CardDescription>
+                <CardDescription>{user?.userType === "buyer" ? "Buyer" : "Seller"}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Email</p>
-                  <p className="text-sm text-muted-foreground">{user?.email || "Not provided"}</p>
+                <div className="flex items-center space-y-1">
+                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <p className="text-sm text-muted-foreground">{user?.email || "Not provided"}</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Phone</p>
-                  <p className="text-sm text-muted-foreground">{user?.phoneNumber || "Not provided"}</p>
+                <div className="flex items-center space-y-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm text-muted-foreground">{user?.phoneNumber || "Not provided"}</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Account Created</p>
-                  <p className="text-sm text-muted-foreground">{user?.createdAt?.toLocaleDateString() || "Unknown"}</p>
+                <div className="flex items-center space-y-1">
+                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Account Created</p>
+                    <p className="text-sm text-muted-foreground">{user?.createdAt?.toLocaleDateString() || "Unknown"}</p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Phone Verification</p>
-                  <p className="text-sm text-muted-foreground">
-                    {user?.isPhoneVerified ? "Verified ✓" : "Not Verified"}
-                  </p>
+                <div className="flex items-center space-y-1">
+                  <Check className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Phone Verification</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user?.isPhoneVerified ? "Verified ✓" : "Not Verified"}
+                    </p>
+                  </div>
                 </div>
+                {isBuyer && (
+                  <div className="flex items-center space-y-1">
+                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Default Location</p>
+                      <p className="text-sm text-muted-foreground">
+                        {buyerProfile?.deliveryPreferences?.defaultAddress || "Not set"}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter>
@@ -124,6 +190,35 @@ const Profile = () => {
                       onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})}
                     />
                   </div>
+                  
+                  {isBuyer && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="address">Default Delivery Location</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={useCurrentLocation}
+                          disabled={isLoadingLocation}
+                        >
+                          {isLoadingLocation ? (
+                            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-1"></div>
+                          ) : (
+                            <Navigation className="h-3 w-3 mr-1" />
+                          )}
+                          Use Current Location
+                        </Button>
+                      </div>
+                      <Input
+                        id="address"
+                        value={profileForm.address}
+                        onChange={(e) => setProfileForm({...profileForm, address: e.target.value})}
+                        placeholder="Enter your default address in Tanzania"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex gap-2 pt-4">
                     <Button onClick={handleSaveProfile}>Save Changes</Button>
                     <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
@@ -143,8 +238,25 @@ const Profile = () => {
                       <div className="space-y-2">
                         <h3 className="text-lg font-medium">Delivery Preferences</h3>
                         <p className="text-sm text-muted-foreground">
-                          Configure your preferred delivery options and times
+                          Configure your preferred delivery options and locations
                         </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-2">
+                        <h3 className="flex items-center text-lg font-medium">
+                          <MapPin className="h-5 w-5 mr-2 text-primary" />
+                          Default Delivery Location
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {buyerProfile?.deliveryPreferences?.defaultAddress || "No default address set"}
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-2"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          Update Location
+                        </Button>
                       </div>
                       <Separator />
                       <div className="space-y-2">
@@ -168,7 +280,7 @@ const Profile = () => {
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-muted-foreground">Verification Status</p>
-                            <p className="text-sm font-medium">{sellerProfile?.verificationStatus.toUpperCase() || "PENDING"}</p>
+                            <p className="text-sm font-medium">{sellerProfile?.verificationStatus?.toUpperCase() || "PENDING"}</p>
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-muted-foreground">Average Rating</p>
@@ -182,6 +294,20 @@ const Profile = () => {
                         <p className="text-sm text-muted-foreground">
                           {sellerProfile?.businessDescription || "No business description provided."}
                         </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-medium">Business Location</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Set your farm or business location for buyers to find you
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-2"
+                          onClick={() => setIsEditing(true)}
+                        >
+                          Update Business Location
+                        </Button>
                       </div>
                     </TabsContent>
                   )}

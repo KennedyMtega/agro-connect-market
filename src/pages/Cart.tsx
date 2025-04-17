@@ -6,17 +6,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Trash2, Plus, Minus, MapPin, CreditCard, Truck } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, MapPin, CreditCard, Truck, Navigation, MapPinned } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Cart = () => {
-  const { items, removeFromCart, updateQuantity, subtotal, clearCart, proceedToCheckout, isCheckingOut } = useCart();
+  const { 
+    items, 
+    removeFromCart, 
+    updateQuantity, 
+    subtotal, 
+    clearCart, 
+    proceedToCheckout, 
+    isCheckingOut,
+    deliveryLocation,
+    setDeliveryLocation,
+    useCurrentLocation,
+    isLoadingLocation
+  } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [deliveryAddress, setDeliveryAddress] = useState("");
   
-  const deliveryFee = 5.99;
+  const deliveryFee = 4500; // 4,500 TZS
   const total = subtotal + deliveryFee;
 
   const handleQuantityChange = (cropId: string, newQuantity: number) => {
@@ -24,16 +36,38 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    if (!deliveryAddress.trim()) {
+    if (!deliveryLocation && !deliveryAddress.trim()) {
       toast({
         title: "Missing Delivery Address",
-        description: "Please enter a delivery address to continue.",
+        description: "Please enter a delivery address or use current location to continue.",
         variant: "destructive",
       });
       return;
     }
     
+    if (deliveryAddress.trim() && !deliveryLocation) {
+      // If user has entered an address but hasn't set location through the location button
+      setDeliveryLocation({
+        address: deliveryAddress,
+        coordinates: { latitude: 0, longitude: 0 }, // Default coordinates
+        isLiveLocation: false
+      });
+    }
+    
     proceedToCheckout();
+  };
+  
+  const handleManualAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDeliveryAddress(e.target.value);
+    
+    // If we're setting a manual address, clear any existing live location
+    if (deliveryLocation?.isLiveLocation) {
+      setDeliveryLocation({
+        ...deliveryLocation,
+        address: e.target.value,
+        isLiveLocation: false
+      });
+    }
   };
 
   if (isCheckingOut) {
@@ -104,7 +138,7 @@ const Cart = () => {
                       <div className="flex-1 space-y-1">
                         <h3 className="font-medium">{item.crop.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          ${item.crop.pricePerUnit.toFixed(2)} per {item.crop.unit}
+                          {item.crop.pricePerUnit.toLocaleString()} TZS per {item.crop.unit}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Seller: {item.crop.sellerName || "Unknown Seller"}
@@ -135,7 +169,7 @@ const Cart = () => {
                       
                       <div className="text-right">
                         <p className="font-medium">
-                          ${(item.crop.pricePerUnit * item.quantity).toFixed(2)}
+                          {(item.crop.pricePerUnit * item.quantity).toLocaleString()} TZS
                         </p>
                         <Button 
                           variant="ghost" 
@@ -170,28 +204,54 @@ const Cart = () => {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{subtotal.toLocaleString()} TZS</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Delivery Fee</span>
-                  <span>${deliveryFee.toFixed(2)}</span>
+                  <span>{deliveryFee.toLocaleString()} TZS</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-medium">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{total.toLocaleString()} TZS</span>
                 </div>
                 
                 <div className="pt-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Delivery Address</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Delivery Location</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={useCurrentLocation}
+                        disabled={isLoadingLocation}
+                      >
+                        {isLoadingLocation ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-1"></div>
+                        ) : (
+                          <Navigation className="h-3 w-3 mr-1" />
+                        )}
+                        Current Location
+                      </Button>
+                    </div>
                   </div>
-                  <Input 
-                    placeholder="Enter your delivery address"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                  />
+                  
+                  {deliveryLocation?.isLiveLocation ? (
+                    <div className="flex items-center p-2 border rounded-md bg-primary/5 mb-2">
+                      <MapPinned className="h-4 w-4 text-primary mr-2" />
+                      <span className="text-sm flex-1">Using your current location</span>
+                    </div>
+                  ) : (
+                    <Input 
+                      placeholder="Enter your delivery address in Tanzania"
+                      value={deliveryAddress || (deliveryLocation?.address || "")}
+                      onChange={handleManualAddressChange}
+                    />
+                  )}
                 </div>
                 
                 <div className="pt-2 space-y-2">
@@ -201,7 +261,7 @@ const Cart = () => {
                   </div>
                   <div className="flex items-center gap-2 p-2 border rounded-md bg-primary/5">
                     <CreditCard className="h-4 w-4" />
-                    <span className="text-sm">Pay on Delivery</span>
+                    <span className="text-sm">Cash on Delivery</span>
                   </div>
                 </div>
               </CardContent>
