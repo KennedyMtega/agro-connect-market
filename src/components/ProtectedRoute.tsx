@@ -26,12 +26,14 @@ const ProtectedRoute = ({ children, requiredUserType }: ProtectedRouteProps) => 
 
   // If a specific user type is required, check that condition
   if (requiredUserType && user.userType !== requiredUserType) {
-    // Show toast notification for better UX
-    toast({
-      title: "Access Restricted",
-      description: `This area is only accessible to ${requiredUserType}s.`,
-      variant: "destructive",
-    });
+    // Use useEffect to show toast only once after render
+    useEffect(() => {
+      toast({
+        title: "Access Restricted",
+        description: `This area is only accessible to ${requiredUserType}s.`,
+        variant: "destructive",
+      });
+    }, []);
     
     // Redirect to appropriate page based on user type
     if (user.userType === "buyer") {
