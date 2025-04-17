@@ -1,3 +1,4 @@
+
 // User Types
 export type UserType = 'buyer' | 'seller';
 
@@ -52,6 +53,9 @@ export interface Crop {
     };
     address: string;
   };
+  // Adding the missing properties
+  isFeatured?: boolean;
+  createdAt?: Date;
 }
 
 // Location Types
