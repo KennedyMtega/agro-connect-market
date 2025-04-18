@@ -1,16 +1,7 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { 
-  User,
-  BuyerProfile,
-  SellerProfile,
-  AuthState
-} from "@/types";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { User, BuyerProfile, SellerProfile, AuthState } from "@/types";
+import { getMockUserByEmail, createMockUser, createMockBuyerProfile, createMockSellerProfile } from "@/utils/authUtils";
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -32,7 +23,7 @@ const initialState: AuthState = {
   error: null,
 };
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   ...initialState,
   login: async () => {},
   loginWithPhone: async () => {},
@@ -55,34 +46,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (mockUser) {
           const userData = JSON.parse(mockUser);
+          userData.createdAt = new Date(userData.createdAt);
           
           if (userData.userType === "buyer") {
             setState({
               ...state,
               user: userData,
-              buyerProfile: {
-                id: `buyer-${userData.id}`,
-                userId: userData.id,
-                deliveryPreferences: {},
-                paymentMethods: {},
-                notificationPreferences: {},
-              },
+              buyerProfile: createMockBuyerProfile(userData.id),
               isLoading: false,
             });
-          } 
-          else if (userData.userType === "seller") {
+          } else if (userData.userType === "seller") {
             setState({
               ...state,
               user: userData,
-              sellerProfile: {
-                id: `seller-${userData.id}`,
-                userId: userData.id,
-                businessName: "Farm Fresh Produce",
-                businessDescription: "Local organic farm produce",
-                verificationStatus: 'verified',
-                averageRating: 4.5,
-                totalRatings: 27,
-              },
+              sellerProfile: createMockSellerProfile(userData.id),
               isLoading: false,
             });
           } else {
@@ -114,39 +91,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      let mockUser: User;
-      
-      if (email === "buyer@example.com" && password === "buyerpass") {
-        mockUser = {
-          id: "buyer-123",
-          email: "buyer@example.com",
-          fullName: "John Buyer",
-          userType: "buyer",
-          isPhoneVerified: true,
-          preferredAuthMethod: "email",
-          createdAt: new Date(),
-        };
-      } else if (email === "seller@example.com" && password === "sellerpass") {
-        mockUser = {
-          id: "seller-456",
-          email: "seller@example.com",
-          fullName: "Jane Seller",
-          userType: "seller",
-          isPhoneVerified: true,
-          preferredAuthMethod: "email",
-          createdAt: new Date(),
-        };
-      } else {
-        mockUser = {
-          id: "user-" + Math.random().toString(36).substring(7),
-          email,
-          fullName: "Demo User",
-          userType: "buyer",
-          isPhoneVerified: false,
-          preferredAuthMethod: "email",
-          createdAt: new Date(),
-        };
-      }
+      const mockUser = getMockUserByEmail(email, password) || 
+        createMockUser(email, "Demo User", "buyer");
 
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
@@ -154,29 +100,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setState({
           ...state,
           user: mockUser,
-          buyerProfile: {
-            id: `buyer-${mockUser.id}`,
-            userId: mockUser.id,
-            deliveryPreferences: {},
-            paymentMethods: {},
-            notificationPreferences: {},
-          },
+          buyerProfile: createMockBuyerProfile(mockUser.id),
           isLoading: false,
         });
-      } 
-      else if (mockUser.userType === "seller") {
+      } else if (mockUser.userType === "seller") {
         setState({
           ...state,
           user: mockUser,
-          sellerProfile: {
-            id: `seller-${mockUser.id}`,
-            userId: mockUser.id,
-            businessName: "Farm Fresh Produce",
-            businessDescription: "Local organic farm produce",
-            verificationStatus: 'verified',
-            averageRating: 4.5,
-            totalRatings: 27,
-          },
+          sellerProfile: createMockSellerProfile(mockUser.id),
           isLoading: false,
         });
       } else {
@@ -199,15 +130,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      const mockUser: User = {
-        id: "user-123",
-        phoneNumber,
-        fullName: "Demo User",
-        userType: "buyer",
-        isPhoneVerified: true,
-        preferredAuthMethod: "phone",
-        createdAt: new Date(),
-      };
+      const mockUser = createMockUser("", "Demo User", "buyer", "phone", phoneNumber);
+      mockUser.isPhoneVerified = true;
 
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
@@ -234,16 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      const mockUser: User = {
-        id: "user-123",
-        email,
-        fullName,
-        userType,
-        isPhoneVerified: false,
-        preferredAuthMethod: "email",
-        createdAt: new Date(),
-      };
-
+      const mockUser = createMockUser(email, fullName, userType);
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
       setState({
@@ -268,16 +183,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      const mockUser: User = {
-        id: "user-123",
-        phoneNumber,
-        fullName,
-        userType,
-        isPhoneVerified: false,
-        preferredAuthMethod: "phone",
-        createdAt: new Date(),
-      };
-
+      const mockUser = createMockUser("", fullName, userType, "phone", phoneNumber);
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
       setState({
@@ -326,7 +232,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       localStorage.removeItem("agrouser");
-
       setState({
         ...initialState,
         isLoading: false,
@@ -466,12 +371,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 };
