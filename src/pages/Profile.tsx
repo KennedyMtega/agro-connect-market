@@ -86,6 +86,29 @@ const Profile = () => {
     );
   };
 
+  // Helper function to safely format dates
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return "Unknown";
+    
+    try {
+      // If it's already a Date object
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue.toLocaleDateString();
+      }
+      
+      // If it's a string or number, try to convert to Date
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString();
+      }
+      
+      return "Unknown date format";
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Unknown";
+    }
+  };
+
   return (
     <Layout>
       <div className="container py-6">
@@ -123,7 +146,7 @@ const Profile = () => {
                   <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Account Created</p>
-                    <p className="text-sm text-muted-foreground">{user?.createdAt?.toLocaleDateString() || "Unknown"}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(user?.createdAt)}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-y-1">
