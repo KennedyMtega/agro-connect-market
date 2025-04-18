@@ -1,7 +1,11 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { User, BuyerProfile, SellerProfile, AuthState } from "@/types";
-import { getMockUserByEmail, createMockUser, createMockBuyerProfile, createMockSellerProfile } from "@/utils/authUtils";
+import { 
+  getMockUserByEmail, 
+  createMockUser, 
+  createMockBuyerProfile, 
+  createMockSellerProfile 
+} from "@/utils/authUtils";
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -39,51 +43,51 @@ export const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const mockUser = localStorage.getItem("agrouser");
+  const checkAuth = async () => {
+    try {
+      const mockUser = localStorage.getItem("agrouser");
+      
+      if (mockUser) {
+        const userData = JSON.parse(mockUser);
+        userData.createdAt = new Date(userData.createdAt);
         
-        if (mockUser) {
-          const userData = JSON.parse(mockUser);
-          userData.createdAt = new Date(userData.createdAt);
-          
-          if (userData.userType === "buyer") {
-            setState({
-              ...state,
-              user: userData,
-              buyerProfile: createMockBuyerProfile(userData.id),
-              isLoading: false,
-            });
-          } else if (userData.userType === "seller") {
-            setState({
-              ...state,
-              user: userData,
-              sellerProfile: createMockSellerProfile(userData.id),
-              isLoading: false,
-            });
-          } else {
-            setState({
-              ...state,
-              user: userData,
-              isLoading: false,
-            });
-          }
+        if (userData.userType === "buyer") {
+          setState({
+            ...state,
+            user: userData,
+            buyerProfile: createMockBuyerProfile(userData.id),
+            isLoading: false,
+          });
+        } else if (userData.userType === "seller") {
+          setState({
+            ...state,
+            user: userData,
+            sellerProfile: createMockSellerProfile(userData.id),
+            isLoading: false,
+          });
         } else {
           setState({
             ...state,
+            user: userData,
             isLoading: false,
           });
         }
-      } catch (error) {
+      } else {
         setState({
           ...state,
-          error: "Authentication error",
           isLoading: false,
         });
       }
-    };
+    } catch (error) {
+      setState({
+        ...state,
+        error: "Authentication error",
+        isLoading: false,
+      });
+    }
+  };
 
+  useEffect(() => {
     checkAuth();
   }, []);
 
