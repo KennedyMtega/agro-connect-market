@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
   requiredUserType?: "buyer" | "seller";
 }
 
-const ProtectedRoute = ({ children, requiredUserType }: ProtectedRouteProps) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserType }) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -20,7 +20,6 @@ import OrderTracking from "./pages/OrderTracking";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
-import { useAuth } from "@/context/AuthContext";
 
 // Redirect component that checks user type and redirects accordingly
 const RedirectBasedOnRole = () => {
