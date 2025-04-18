@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useContext,
@@ -45,6 +46,7 @@ const AuthContext = createContext<AuthContextType>({
   updateSellerProfile: async () => {},
 });
 
+// Make sure the AuthProvider is declared as a proper React function component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
 
@@ -130,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "buyer",
           isPhoneVerified: true,
           preferredAuthMethod: "email",
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(), // Use string ISO format
         };
       } else if (email === "seller@example.com" && password === "sellerpass") {
         mockUser = {
@@ -140,7 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "seller",
           isPhoneVerified: true,
           preferredAuthMethod: "email",
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(), // Use string ISO format
         };
       } else {
         // For demo purposes, default to buyer if credentials don't match our specific test ones
@@ -151,7 +153,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "buyer",
           isPhoneVerified: false,
           preferredAuthMethod: "email",
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(), // Use string ISO format
         };
       }
 

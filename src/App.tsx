@@ -36,6 +36,7 @@ const RedirectBasedOnRole = () => {
   return user.userType === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
 };
 
+// Create a new instance of QueryClient
 const queryClient = new QueryClient();
 
 const App = () => (
