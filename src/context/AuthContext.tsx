@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useContext,
@@ -46,22 +45,17 @@ const AuthContext = createContext<AuthContextType>({
   updateSellerProfile: async () => {},
 });
 
-// Make sure the AuthProvider is declared as a proper React function component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
 
-  // This would normally fetch the user from a backend API or local storage
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Mock authentication check
-        // In a real app, you would call your backend API or Supabase
         const mockUser = localStorage.getItem("agrouser");
         
         if (mockUser) {
           const userData = JSON.parse(mockUser);
           
-          // If the user is a buyer, create a mock buyer profile
           if (userData.userType === "buyer") {
             setState({
               ...state,
@@ -76,7 +70,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               isLoading: false,
             });
           } 
-          // If the user is a seller, create a mock seller profile
           else if (userData.userType === "seller") {
             setState({
               ...state,
@@ -121,7 +114,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Handle our dummy credentials
       let mockUser: User;
       
       if (email === "buyer@example.com" && password === "buyerpass") {
@@ -132,7 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "buyer",
           isPhoneVerified: true,
           preferredAuthMethod: "email",
-          createdAt: new Date().toISOString(), // Use string ISO format
+          createdAt: new Date(),
         };
       } else if (email === "seller@example.com" && password === "sellerpass") {
         mockUser = {
@@ -142,10 +134,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "seller",
           isPhoneVerified: true,
           preferredAuthMethod: "email",
-          createdAt: new Date().toISOString(), // Use string ISO format
+          createdAt: new Date(),
         };
       } else {
-        // For demo purposes, default to buyer if credentials don't match our specific test ones
         mockUser = {
           id: "user-" + Math.random().toString(36).substring(7),
           email,
@@ -153,13 +144,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           userType: "buyer",
           isPhoneVerified: false,
           preferredAuthMethod: "email",
-          createdAt: new Date().toISOString(), // Use string ISO format
+          createdAt: new Date(),
         };
       }
 
       localStorage.setItem("agrouser", JSON.stringify(mockUser));
 
-      // If the user is a buyer, create a mock buyer profile
       if (mockUser.userType === "buyer") {
         setState({
           ...state,
@@ -174,7 +164,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
         });
       } 
-      // If the user is a seller, create a mock seller profile
       else if (mockUser.userType === "seller") {
         setState({
           ...state,
@@ -210,12 +199,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock login with phone - would be replaced with actual API call
       const mockUser: User = {
         id: "user-123",
         phoneNumber,
         fullName: "Demo User",
-        userType: "buyer", // Default to buyer
+        userType: "buyer",
         isPhoneVerified: true,
         preferredAuthMethod: "phone",
         createdAt: new Date(),
@@ -246,7 +234,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock registration - would be replaced with actual API call
       const mockUser: User = {
         id: "user-123",
         email,
@@ -281,13 +268,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock registration with phone - would be replaced with actual API call
       const mockUser: User = {
         id: "user-123",
         phoneNumber,
         fullName,
         userType,
-        isPhoneVerified: false, // Would be verified via OTP
+        isPhoneVerified: false,
         preferredAuthMethod: "phone",
         createdAt: new Date(),
       };
@@ -312,7 +298,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock phone verification - would be replaced with actual API call
       if (state.user) {
         const updatedUser = {
           ...state.user,
@@ -340,7 +325,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock logout - would be replaced with actual API call
       localStorage.removeItem("agrouser");
 
       setState({
@@ -360,7 +344,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock update profile - would be replaced with actual API call
       if (state.user) {
         const updatedUser = {
           ...state.user,
@@ -388,7 +371,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock update buyer profile - would be replaced with actual API call
       if (state.buyerProfile) {
         const updatedBuyerProfile = {
           ...state.buyerProfile,
@@ -401,7 +383,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
         });
       } else {
-        // Create new buyer profile
         const newBuyerProfile: BuyerProfile = {
           id: `buyer-${state.user?.id || 'new'}`,
           userId: state.user?.id || 'new',
@@ -430,7 +411,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setState({ ...state, isLoading: true, error: null });
 
     try {
-      // Mock update seller profile - would be replaced with actual API call
       if (state.sellerProfile) {
         const updatedSellerProfile = {
           ...state.sellerProfile,
@@ -443,7 +423,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
         });
       } else {
-        // Create new seller profile
         const newSellerProfile: SellerProfile = {
           id: `seller-${state.user?.id || 'new'}`,
           userId: state.user?.id || 'new',
