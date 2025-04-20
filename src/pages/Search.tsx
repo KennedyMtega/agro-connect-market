@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +21,7 @@ import {
 import Layout from "@/components/layout/Layout";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import MapView from "@/components/map/MapView";
 
 // Mock crop types
 const cropTypes = [
@@ -97,7 +97,6 @@ const SellerCard = ({ seller, selectedCropType }: { seller: any, selectedCropTyp
   const [quantity, setQuantity] = useState(1);
   const { toast } = useToast();
 
-  // Filter crops by selected type
   const filteredCrops = selectedCropType 
     ? seller.crops.filter((crop: any) => crop.category.toLowerCase() === selectedCropType.toLowerCase())
     : seller.crops;
@@ -210,7 +209,7 @@ const SellerCard = ({ seller, selectedCropType }: { seller: any, selectedCropTyp
 const Search = () => {
   const [selectedCropType, setSelectedCropType] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState("categories");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const { toast } = useToast();
@@ -219,7 +218,6 @@ const Search = () => {
     setSelectedCropType(id);
     setIsSearching(true);
     
-    // Simulate search loading
     setTimeout(() => {
       setSearchResults(mockSellers);
       setIsSearching(false);
@@ -237,7 +235,6 @@ const Search = () => {
     
     setIsSearching(true);
     
-    // Simulate search loading
     setTimeout(() => {
       setSearchResults(mockSellers);
       setIsSearching(false);
@@ -258,9 +255,9 @@ const Search = () => {
   return (
     <Layout>
       <div className="container py-6">
-        <Tabs defaultValue="categories" className="mb-6">
+        <Tabs defaultValue="categories" value={viewMode} onValueChange={setViewMode} className="mb-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="categories">List View</TabsTrigger>
             <TabsTrigger value="map">Map View</TabsTrigger>
           </TabsList>
           
@@ -349,13 +346,8 @@ const Search = () => {
           </TabsContent>
           
           <TabsContent value="map">
-            <div className="bg-slate-100 rounded-lg p-4 min-h-[500px] flex flex-col items-center justify-center">
-              <div className="text-4xl mb-4">🗺️</div>
-              <h3 className="text-xl font-medium mb-2">Map View Coming Soon</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Soon you'll be able to see nearby sellers on an interactive map, 
-                tracking deliveries in real-time just like in ride-hailing apps.
-              </p>
+            <div className="bg-background rounded-lg min-h-[600px] flex flex-col">
+              <MapView className="h-[600px]" />
             </div>
           </TabsContent>
         </Tabs>
