@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter } from "lucide-react";
 
@@ -10,7 +9,14 @@ const Footer = () => {
       <div className="container px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <h3 className="text-lg font-bold">AgroConnect</h3>
+            <div className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/091e46ba-9e22-49fc-b392-d4786a34403a.png" 
+                alt="AgroConnect Logo" 
+                className="h-8 w-8 object-contain"
+              />
+              <h3 className="text-lg font-bold">AgroConnect</h3>
+            </div>
             <p className="text-sm text-muted-foreground">
               Connecting agricultural buyers and sellers for a sustainable future.
             </p>

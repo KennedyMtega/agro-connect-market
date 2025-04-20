@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -55,7 +54,12 @@ const Header = () => {
             </SheetTrigger>
             <SheetContent side="left" className="w-[240px] sm:w-[300px]">
               <nav className="flex flex-col gap-4 pt-4">
-                <Link to="/" className="font-bold text-lg text-primary">
+                <Link to="/" className="flex items-center gap-2 font-bold text-lg text-primary">
+                  <img 
+                    src="/lovable-uploads/091e46ba-9e22-49fc-b392-d4786a34403a.png" 
+                    alt="AgroConnect Logo" 
+                    className="h-6 w-6 object-contain"
+                  />
                   AgroConnect
                 </Link>
                 <div className="flex flex-col gap-2 mt-4">
@@ -118,10 +122,20 @@ const Header = () => {
               </nav>
             </SheetContent>
           </Sheet>
-          <Link to={user ? (isBuyer ? "/search" : "/dashboard") : "/"} className="font-bold text-xl text-primary hidden md:block">
+          <Link to={user ? (isBuyer ? "/search" : "/dashboard") : "/"} className="hidden md:flex items-center gap-2 font-bold text-xl text-primary">
+            <img 
+              src="/lovable-uploads/091e46ba-9e22-49fc-b392-d4786a34403a.png" 
+              alt="AgroConnect Logo" 
+              className="h-8 w-8 object-contain"
+            />
             AgroConnect
           </Link>
-          <Link to={user ? (isBuyer ? "/search" : "/dashboard") : "/"} className="font-bold text-xl text-primary md:hidden">
+          <Link to={user ? (isBuyer ? "/search" : "/dashboard") : "/"} className="flex md:hidden items-center gap-1 font-bold text-xl text-primary">
+            <img 
+              src="/lovable-uploads/091e46ba-9e22-49fc-b392-d4786a34403a.png" 
+              alt="AgroConnect Logo" 
+              className="h-6 w-6 object-contain"
+            />
             AC
           </Link>
         </div>
