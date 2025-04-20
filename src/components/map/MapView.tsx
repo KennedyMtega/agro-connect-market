@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -153,7 +152,7 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
     );
 
     // Add user marker
-    const userMarker = new mapboxgl.Marker({ color: '#0EA5E9' })
+    const userMarker = new mapboxgl.Marker({ color: '#3b82f6' })
       .setLngLat([userPosition.lng, userPosition.lat])
       .addTo(map.current);
 
@@ -179,7 +178,7 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
       el.style.width = '30px';
       el.style.height = '30px';
       el.style.borderRadius = '50%';
-      el.style.backgroundColor = '#7E69AB';
+      el.style.backgroundColor = '#3b82f6';
       el.style.display = 'flex';
       el.style.alignItems = 'center';
       el.style.justifyContent = 'center';
@@ -285,7 +284,7 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
             'line-cap': 'round'
           },
           paint: {
-            'line-color': '#9b87f5',
+            'line-color': '#3b82f6',
             'line-width': 4,
             'line-dasharray': [0, 2]
           }
