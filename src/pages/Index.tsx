@@ -1,6 +1,5 @@
-
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -225,7 +224,6 @@ const HowItWorksSection = () => {
           
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 text-primary mb-4 relative">
-              {/* Different icon based on user type */}
               <Package className="w-8 h-8" />
               <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold">2</div>
             </div>

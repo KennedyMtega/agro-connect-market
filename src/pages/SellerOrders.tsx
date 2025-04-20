@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +16,8 @@ import {
   Eye, 
   ArrowUpDown
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
-// Mock data for seller orders
 const mockOrdersData = [
   { 
     id: "ord-001", 
@@ -111,12 +109,10 @@ const SellerOrders = () => {
   const filterOrders = (orders: typeof mockOrdersData) => {
     let filtered = [...orders];
     
-    // Filter by tab/status
     if (activeTab !== "all") {
       filtered = filtered.filter(order => order.status === activeTab);
     }
     
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -127,7 +123,6 @@ const SellerOrders = () => {
       );
     }
     
-    // Sort orders
     filtered.sort((a, b) => {
       if (sortField === "date") {
         return sortDirection === "asc" 
