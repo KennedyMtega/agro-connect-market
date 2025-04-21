@@ -17,11 +17,11 @@ const Search = () => {
             <TabsTrigger value="map">Map View</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="list">
+          <TabsContent value="list" className="mt-4">
             <ListView />
           </TabsContent>
           
-          <TabsContent value="map">
+          <TabsContent value="map" className="mt-4">
             <div className="bg-background rounded-lg min-h-[600px] flex flex-col">
               <MapView className="h-[600px]" />
             </div>
