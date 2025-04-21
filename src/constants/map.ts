@@ -6,4 +6,5 @@ export const DEFAULT_POSITION = {
 };
 
 // Default Mapbox token - make sure to use a valid token
-export const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoiZWFseW5lIiwiYSI6ImNscWEydHR2dDB5Y3cycW56aG5sdWttdGsifQ.r9_zV2dYeOpm22LK5YwTuw';
+export const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+
