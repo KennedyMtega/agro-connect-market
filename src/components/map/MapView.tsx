@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -18,12 +19,15 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import VendorList from './VendorList';
+import VendorDetail from './VendorDetail';
+import OrderConfirmation from './OrderConfirmation';
 
 // Temporary access token input for demo purposes
 // In production, this should be stored in environment variables
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGVtb3VzZXIiLCJhIjoiY2wxeHVhNmU5MGp0MDNqbXFtc3g4ZzE0aSJ9.8f_J1z0fVGQDGFiihU_fEg';
 
-interface Vendor {
+export interface Vendor {
   id: string;
   name: string;
   location: {
@@ -96,17 +100,17 @@ const mockVendors: Vendor[] = [
   }
 ];
 
-interface MapViewProps {
-  className?: string;
-}
-
-enum ViewState {
+export enum ViewState {
   INITIAL,
   SEARCHING,
   VENDOR_LIST,
   VENDOR_DETAIL,
   CHECKOUT,
   CONFIRMATION
+}
+
+interface MapViewProps {
+  className?: string;
 }
 
 const MapView: React.FC<MapViewProps> = ({ className }) => {
@@ -133,38 +137,60 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
   };
 
   useEffect(() => {
+    if (map.current) return; // Prevent re-initialization
     if (!mapContainer.current) return;
 
     // Initialize map
-    mapboxgl.accessToken = accessToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [userPosition.lng, userPosition.lat],
-      zoom: 13
-    });
+    try {
+      mapboxgl.accessToken = accessToken;
+      
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [userPosition.lng, userPosition.lat],
+        zoom: 13
+      });
 
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl(),
-      'top-right'
-    );
+      // Add navigation controls
+      map.current.addControl(
+        new mapboxgl.NavigationControl(),
+        'top-right'
+      );
 
-    // Add user marker
-    const userMarker = new mapboxgl.Marker({ color: '#3b82f6' })
-      .setLngLat([userPosition.lng, userPosition.lat])
-      .addTo(map.current);
+      // Add user marker
+      const userMarker = new mapboxgl.Marker({ color: '#3b82f6' })
+        .setLngLat([userPosition.lng, userPosition.lat])
+        .addTo(map.current);
+
+      // Debug
+      console.log('Map initialized successfully', map.current);
+      
+      // Add event listener to check when map is loaded
+      map.current.on('load', () => {
+        console.log('Map loaded event fired');
+      });
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
 
     // Cleanup function
     return () => {
-      map.current?.remove();
+      if (map.current) {
+        console.log('Removing map');
+        map.current.remove();
+        map.current = null;
+      }
     };
   }, [accessToken]);
 
   // Handle adding vendor markers to map
   const addVendorMarkers = (vendors: Vendor[]) => {
-    if (!map.current) return;
+    if (!map.current) {
+      console.error('Map not initialized when adding markers');
+      return;
+    }
+    
+    console.log('Adding vendor markers', vendors.length);
     
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
@@ -204,6 +230,8 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
       
       markers.current.push(marker);
     });
+    
+    console.log('Added markers:', markers.current.length);
   };
 
   // Handle search
@@ -213,6 +241,8 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
     
     setViewState(ViewState.SEARCHING);
     setIsSearching(true);
+    
+    console.log('Searching for:', searchTerm);
     
     // Simulate search
     setTimeout(() => {
@@ -359,307 +389,152 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
     }
   };
 
+  // Render based on current view state
+  const renderContent = () => {
+    switch (viewState) {
+      case ViewState.INITIAL:
+        return (
+          <>
+            {/* Access token input - Only for demo purposes */}
+            <div className="absolute top-2 left-2 right-2 z-10 bg-background/90 p-2 rounded-lg shadow-md text-xs">
+              <p className="mb-1 text-muted-foreground">Demo: Enter your Mapbox access token or use default</p>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  className="text-xs py-1"
+                  placeholder="Enter Mapbox access token"
+                />
+                <Button size="sm" className="py-1" onClick={() => {
+                  toast({ title: "Token Updated" });
+                  // Force map reinitialization by unmounting and remounting
+                  if (map.current) {
+                    map.current.remove();
+                    map.current = null;
+                  }
+                  setTimeout(() => {
+                    if (mapContainer.current && !map.current) {
+                      mapboxgl.accessToken = accessToken;
+                      map.current = new mapboxgl.Map({
+                        container: mapContainer.current,
+                        style: 'mapbox://styles/mapbox/streets-v12',
+                        center: [userPosition.lng, userPosition.lat],
+                        zoom: 13
+                      });
+                    }
+                  }, 100);
+                }}>
+                  Set
+                </Button>
+              </div>
+            </div>
+            
+            {/* Search UI */}
+            <div className="absolute top-16 left-2 right-2 z-10">
+              <Card className="w-full">
+                <CardHeader className="p-4 pb-0">
+                  <CardTitle className="text-lg">Find Crops Near You</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <form onSubmit={handleSearch} className="flex gap-2">
+                    <div className="relative flex-grow">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        type="text"
+                        placeholder="Search for crops..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button type="submit">
+                      Search
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        );
+      
+      case ViewState.SEARCHING:
+        return (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+            <div className="bg-background rounded-lg p-6 shadow-lg flex flex-col items-center">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+              <h3 className="text-xl font-semibold mb-2">Finding Crops</h3>
+              <p className="text-muted-foreground">Searching for "{searchTerm}" near you...</p>
+            </div>
+          </div>
+        );
+      
+      case ViewState.VENDOR_LIST:
+        return (
+          <VendorList 
+            vendors={vendors} 
+            searchTerm={searchTerm}
+            onSelectVendor={(vendor) => {
+              setSelectedVendor(vendor);
+              setViewState(ViewState.VENDOR_DETAIL);
+              
+              // Fly to vendor
+              map.current?.flyTo({
+                center: [vendor.location.lng, vendor.location.lat],
+                zoom: 15,
+                essential: true
+              });
+            }}
+            onReset={resetSearch}
+          />
+        );
+      
+      case ViewState.VENDOR_DETAIL:
+        return selectedVendor ? (
+          <VendorDetail
+            vendor={selectedVendor}
+            selectedCrop={selectedCrop}
+            setSelectedCrop={setSelectedCrop}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            onBack={() => setViewState(ViewState.VENDOR_LIST)}
+            onPurchase={handlePurchase}
+            isMessageOpen={isMessageOpen}
+            setIsMessageOpen={setIsMessageOpen}
+            message={message}
+            setMessage={setMessage}
+            onSendMessage={handleSendMessage}
+            onNavigate={() => {
+              // Navigate to vendor
+              map.current?.flyTo({
+                center: [selectedVendor.location.lng, selectedVendor.location.lat],
+                zoom: 16,
+                essential: true
+              });
+            }}
+          />
+        ) : null;
+      
+      case ViewState.CONFIRMATION:
+        return selectedVendor ? (
+          <OrderConfirmation 
+            vendor={selectedVendor}
+            onReset={resetSearch}
+          />
+        ) : null;
+      
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={`relative w-full h-full overflow-hidden rounded-lg ${className}`}>
       {/* Map container */}
       <div ref={mapContainer} className="absolute inset-0" />
       
-      {/* Access token input - Only for demo purposes */}
-      {viewState === ViewState.INITIAL && (
-        <div className="absolute top-2 left-2 right-2 z-10 bg-background/90 p-2 rounded-lg shadow-md text-xs">
-          <p className="mb-1 text-muted-foreground">Demo: Enter your Mapbox access token or use default</p>
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              className="text-xs py-1"
-              placeholder="Enter Mapbox access token"
-            />
-            <Button size="sm" className="py-1" onClick={() => toast({ title: "Token Updated" })}>
-              Set
-            </Button>
-          </div>
-        </div>
-      )}
-      
-      {/* Search UI */}
-      {viewState === ViewState.INITIAL && (
-        <div className="absolute top-16 left-2 right-2 z-10">
-          <Card className="w-full">
-            <CardHeader className="p-4 pb-0">
-              <CardTitle className="text-lg">Find Crops Near You</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <form onSubmit={handleSearch} className="flex gap-2">
-                <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    type="text"
-                    placeholder="Search for crops..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Button type="submit">
-                  Search
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      {/* Searching animation */}
-      {viewState === ViewState.SEARCHING && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-          <div className="bg-background rounded-lg p-6 shadow-lg flex flex-col items-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-            <h3 className="text-xl font-semibold mb-2">Finding Crops</h3>
-            <p className="text-muted-foreground">Searching for "{searchTerm}" near you...</p>
-          </div>
-        </div>
-      )}
-      
-      {/* Vendor list */}
-      {viewState === ViewState.VENDOR_LIST && (
-        <div className="absolute bottom-4 left-2 right-2 z-10">
-          <Card>
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Vendors with "{searchTerm}"</CardTitle>
-                <p className="text-sm text-muted-foreground">{vendors.length} vendors found</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={resetSearch}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-4 pt-2 max-h-[60vh] overflow-y-auto">
-              <div className="space-y-3">
-                {vendors.map((vendor) => (
-                  <Card key={vendor.id} className="cursor-pointer hover:bg-accent transition-colors" onClick={() => {
-                    setSelectedVendor(vendor);
-                    setViewState(ViewState.VENDOR_DETAIL);
-                    
-                    // Fly to vendor
-                    map.current?.flyTo({
-                      center: [vendor.location.lng, vendor.location.lat],
-                      zoom: 15,
-                      essential: true
-                    });
-                  }}>
-                    <CardContent className="p-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium flex items-center">
-                            {vendor.name}
-                            {vendor.online && (
-                              <span className="ml-2 w-2 h-2 bg-green-500 rounded-full"></span>
-                            )}
-                          </h3>
-                          <div className="flex items-center text-amber-500 mt-1 text-sm">
-                            <Star className="h-3 w-3 fill-current" />
-                            <span className="ml-1">{vendor.rating}</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm">{vendor.distance} km away</div>
-                          <div className="text-xs text-muted-foreground">
-                            {vendor.estimatedDelivery}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      
-      {/* Vendor detail */}
-      {viewState === ViewState.VENDOR_DETAIL && selectedVendor && (
-        <div className="absolute bottom-4 left-2 right-2 z-10">
-          <Card>
-            <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
-              <div className="flex items-center">
-                <Button variant="ghost" size="icon" className="mr-2" onClick={() => setViewState(ViewState.VENDOR_LIST)}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                  <CardTitle className="text-lg flex items-center">
-                    {selectedVendor.name}
-                    {selectedVendor.online && (
-                      <span className="ml-2 w-2 h-2 bg-green-500 rounded-full"></span>
-                    )}
-                  </CardTitle>
-                  <div className="flex items-center">
-                    <div className="flex items-center text-amber-500 mr-2">
-                      <Star className="h-3 w-3 fill-current" />
-                      <span className="ml-1 text-xs">{selectedVendor.rating}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {selectedVendor.distance} km • {selectedVendor.estimatedDelivery}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex">
-                <Button variant="ghost" size="icon" className="mr-1" onClick={() => setIsMessageOpen(!isMessageOpen)}>
-                  <MessageCircle className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => {
-                  // Navigate to vendor
-                  map.current?.flyTo({
-                    center: [selectedVendor.location.lng, selectedVendor.location.lat],
-                    zoom: 16,
-                    essential: true
-                  });
-                }}>
-                  <Navigation className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            
-            {/* Message panel */}
-            {isMessageOpen && (
-              <div className="mx-4 mb-2 p-3 bg-muted rounded-md">
-                <h4 className="text-sm font-medium mb-2">Message to Vendor</h4>
-                <div className="flex gap-2">
-                  <Input
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="text-sm"
-                  />
-                  <Button size="sm" onClick={handleSendMessage}>Send</Button>
-                </div>
-              </div>
-            )}
-            
-            <CardContent className="p-4 pt-2">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium" htmlFor="crop-select">
-                    Select Crop
-                  </label>
-                  <select
-                    id="crop-select"
-                    value={selectedCrop}
-                    onChange={(e) => setSelectedCrop(e.target.value)}
-                    className="w-full mt-1 p-2 border rounded-md bg-background"
-                  >
-                    <option value="">Select a crop</option>
-                    {selectedVendor.crops.map((crop) => (
-                      <option key={crop.id} value={crop.id}>
-                        {crop.name} - ${crop.pricePerUnit}/{crop.unit} ({crop.quantityAvailable} available)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                {selectedCrop && (
-                  <div>
-                    <label className="text-sm font-medium" htmlFor="quantity">
-                      Quantity
-                    </label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      >
-                        <span>-</span>
-                      </Button>
-                      <Input 
-                        id="quantity"
-                        type="number" 
-                        min="1" 
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="text-center"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => setQuantity(quantity + 1)}
-                      >
-                        <span>+</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedCrop && (
-                  <div className="bg-muted p-3 rounded-md">
-                    <h4 className="text-sm font-medium mb-2">Order Summary</h4>
-                    <div className="flex justify-between text-sm">
-                      <span>Price:</span>
-                      <span>
-                        ${(
-                          (selectedVendor.crops.find(c => c.id === selectedCrop)?.pricePerUnit || 0) * 
-                          quantity
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Delivery Fee:</span>
-                      <span>$2.99</span>
-                    </div>
-                    <div className="flex justify-between text-sm font-medium mt-2 pt-2 border-t">
-                      <span>Total:</span>
-                      <span>
-                        ${(
-                          (selectedVendor.crops.find(c => c.id === selectedCrop)?.pricePerUnit || 0) * 
-                          quantity + 2.99
-                        ).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="p-4 pt-0">
-              <Button 
-                className="w-full" 
-                onClick={handlePurchase}
-                disabled={!selectedCrop}
-              >
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Purchase Now
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-      
-      {/* Confirmation state */}
-      {viewState === ViewState.CONFIRMATION && selectedVendor && (
-        <div className="absolute bottom-4 left-2 right-2 z-10">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Truck className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-1">Order Confirmed!</h3>
-                <p className="text-muted-foreground mb-4">
-                  Your order from {selectedVendor.name} is on its way.
-                </p>
-                <div className="w-full bg-muted p-3 rounded-md mb-4">
-                  <h4 className="text-sm font-medium mb-2">Estimated Delivery Time</h4>
-                  <p className="text-lg font-semibold">{selectedVendor.estimatedDelivery}</p>
-                </div>
-                <Button variant="outline" onClick={resetSearch} className="w-full">
-                  Back to Search
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* UI Overlays */}
+      {renderContent()}
     </div>
   );
 };
