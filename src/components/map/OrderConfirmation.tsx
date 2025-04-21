@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Truck } from "lucide-react";
-import { Vendor } from './MapView';
+import { Vendor } from '@/types/map';
 
 interface OrderConfirmationProps {
   vendor: Vendor;

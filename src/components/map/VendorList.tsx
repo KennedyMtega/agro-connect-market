@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, X } from "lucide-react";
-import { Vendor } from './MapView';
+import { Vendor } from '@/types/map';
 
 interface VendorListProps {
   vendors: Vendor[];

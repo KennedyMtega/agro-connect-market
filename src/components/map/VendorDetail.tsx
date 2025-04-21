@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, MessageCircle, Navigation, ShoppingCart, Star } from "lucide-react";
-import { Vendor } from './MapView';
+import { Vendor } from '@/types/map';
 
 interface VendorDetailProps {
   vendor: Vendor;
