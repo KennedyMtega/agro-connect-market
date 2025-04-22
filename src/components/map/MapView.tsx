@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import MapContainer from './MapContainer';
 import MapControl from './MapControl';
 import MapMarkers from './MapMarkers';
@@ -7,9 +7,21 @@ import MapRoute from './MapRoute';
 import MapViewContent from './MapViewContent';
 import { useMapViewState } from './useMapViewState';
 import { ViewState } from '@/types/map';
+import { useToast } from "@/hooks/use-toast";
 
 const MapView: React.FC<{ className?: string }> = ({ className }) => {
   const state = useMapViewState();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Notify user when map is initialized
+    if (state.map.current) {
+      toast({
+        title: "Map Ready",
+        description: "Map has been initialized successfully",
+      });
+    }
+  }, [state.mapContainer.current, state.accessToken]);
 
   return (
     <div className={`relative w-full h-full overflow-hidden rounded-lg ${className ?? ''}`}>

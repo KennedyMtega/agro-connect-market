@@ -22,8 +22,8 @@ const Search = () => {
           </TabsContent>
           
           <TabsContent value="map" className="mt-4">
-            <div className="bg-background rounded-lg min-h-[600px] flex flex-col">
-              <MapView className="h-[600px]" />
+            <div className="bg-background rounded-lg shadow-md border border-border">
+              <MapView className="h-[70vh] md:h-[80vh]" />
             </div>
           </TabsContent>
         </Tabs>

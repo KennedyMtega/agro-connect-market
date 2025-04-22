@@ -20,7 +20,7 @@ const MapControl: React.FC<MapControlProps> = ({
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (!mapContainer.current || initialized.current) return;
+    if (!mapContainer.current || !accessToken || initialized.current) return;
     
     try {
       console.log('Initializing map with token:', accessToken);
