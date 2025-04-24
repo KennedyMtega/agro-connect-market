@@ -4,36 +4,36 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/toaster";
 
 interface LayoutProps {
   children: ReactNode;
+  hideFooter?: boolean;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, hideFooter = false }: LayoutProps) => {
   const { user } = useAuth();
   const location = useLocation();
   
   // Show welcome toast when user first logs in
   useEffect(() => {
-    if (user && location.pathname === "/") {
-      // Determine message based on user type
-      const welcomeMessage = user.userType === "buyer" 
-        ? `Welcome, ${user.fullName}! You're logged in as a buyer.`
-        : `Welcome, ${user.fullName}! You're logged in as a seller.`;
+    if (user && location.pathname === "/search" && sessionStorage.getItem('firstLogin') !== 'shown') {
+      const welcomeMessage = `Welcome, ${user.fullName}! Start searching for fresh crops near you.`;
         
       toast({
         title: "Logged In Successfully",
         description: welcomeMessage,
       });
+      
+      sessionStorage.setItem('firstLogin', 'shown');
     }
   }, [user, location.pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-green-50">
       <Header />
       <main className="flex-1">{children}</main>
-      <Footer />
+      {!hideFooter && <Footer />}
     </div>
   );
 };

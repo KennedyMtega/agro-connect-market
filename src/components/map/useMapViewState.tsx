@@ -5,6 +5,7 @@ import { ViewState, Vendor } from '@/types/map';
 import { useToast } from "@/hooks/use-toast";
 import { useMapVendors } from '@/hooks/useMapVendors';
 import { DEFAULT_MAPBOX_TOKEN } from '@/constants/map';
+import { useCart } from "@/context/CartContext";
 
 // Extracted hook for MapView state and logic
 export const useMapViewState = () => {
@@ -21,6 +22,7 @@ export const useMapViewState = () => {
   const [accessToken, setAccessToken] = useState<string>(DEFAULT_MAPBOX_TOKEN);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const { addToCart } = useCart();
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -33,20 +35,49 @@ export const useMapViewState = () => {
       setVendors(mockVendors);
       setIsSearching(false);
       setViewState(ViewState.VENDOR_LIST);
+      
+      // Fit map bounds to include all vendors
+      if (map.current && mockVendors.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        mockVendors.forEach(vendor => {
+          bounds.extend([vendor.location.lng, vendor.location.lat]);
+        });
+        
+        map.current.fitBounds(bounds, {
+          padding: { top: 100, bottom: 100, left: 50, right: 50 },
+          maxZoom: 15
+        });
+      }
+      
       toast({
         title: "Search Complete",
         description: `Found ${mockVendors.length} vendors for "${searchTerm}"`,
       });
-    }, 2000);
+    }, 1500);
+  };
+
+  const handleAddToCart = (cropId: string, quantity: number) => {
+    if (!selectedVendor) return;
+    
+    const crop = selectedVendor.crops.find(c => c.id === cropId);
+    if (!crop) return;
+    
+    addToCart(crop, quantity);
+    toast({
+      title: "Added to Cart",
+      description: `${quantity} ${crop.unit} of ${crop.name} added to cart`
+    });
   };
 
   const handlePurchase = () => {
     if (!selectedVendor || !selectedCrop) return;
     const crop = selectedVendor.crops.find(c => c.id === selectedCrop);
     if (!crop) return;
+    
+    addToCart(crop, quantity);
     toast({
-      title: "Order Placed!",
-      description: `${quantity} ${crop.unit} of ${crop.name} from ${selectedVendor.name}`,
+      title: "Added to Cart",
+      description: `${quantity} ${crop.unit} of ${crop.name} added to cart`,
     });
     setViewState(ViewState.CONFIRMATION);
   };
@@ -107,6 +138,6 @@ export const useMapViewState = () => {
     message, setMessage,
     handleSearch, handlePurchase,
     handleSendMessage, resetSearch,
-    handleSelectVendor
+    handleSelectVendor, handleAddToCart
   };
 };

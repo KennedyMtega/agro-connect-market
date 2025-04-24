@@ -6,7 +6,13 @@ interface MapContainerProps {
 }
 
 const MapContainer: React.FC<MapContainerProps> = ({ mapContainer }) => {
-  return <div ref={mapContainer} className="absolute inset-0 w-full h-full" />;
+  return (
+    <div 
+      ref={mapContainer} 
+      className="absolute inset-0 w-full h-full bg-green-50" 
+      style={{ minHeight: '100vh' }}
+    />
+  );
 };
 
 export default MapContainer;

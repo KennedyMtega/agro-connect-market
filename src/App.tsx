@@ -8,7 +8,6 @@ import { AuthProvider } from "@/context/auth/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyPhone from "./pages/VerifyPhone";
@@ -21,19 +20,22 @@ import OrderTracking from "./pages/OrderTracking";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
+import OnBoarding from "./pages/OnBoarding";
 
-// Redirect component that checks user type and redirects accordingly
-const RedirectBasedOnRole = () => {
+// Redirect component based on authentication status
+const RedirectToAuth = () => {
   const { user, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
+  // If user is not logged in, show onboarding
   if (!user) {
-    return <Index />;
+    return <Navigate to="/onboarding" />;
   }
   
+  // If user is logged in, redirect based on type
   return user.userType === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
 };
 
@@ -49,10 +51,13 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Landing page now redirects based on user role */}
-              <Route path="/" element={<RedirectBasedOnRole />} />
+              {/* Root redirects based on auth status */}
+              <Route path="/" element={<RedirectToAuth />} />
               
-              {/* Public routes */}
+              {/* Onboarding */}
+              <Route path="/onboarding" element={<OnBoarding />} />
+              
+              {/* Auth routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-phone" element={<VerifyPhone />} />
@@ -117,7 +122,7 @@ const App = () => (
                 } 
               />
               
-              {/* Shared routes (both user types) */}
+              {/* Shared routes */}
               <Route 
                 path="/profile" 
                 element={
