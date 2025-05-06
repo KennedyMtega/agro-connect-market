@@ -1,12 +1,13 @@
 
 import React, { useState } from "react";
-import { Vendor, Crop } from "@/types/map";
+import { Vendor } from "@/types/map";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatUtils";
+import { Crop } from "@/types";
 
 interface CropSearchResultsProps {
   vendors: Vendor[];

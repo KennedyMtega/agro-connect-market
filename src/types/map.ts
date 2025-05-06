@@ -20,6 +20,28 @@ export interface Vendor {
   online: boolean;
 }
 
+export interface Crop {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  pricePerUnit: number;
+  unit: string;
+  quantityAvailable: number;
+  sellerId?: string;
+  sellerName?: string;
+  images?: string[];
+  isOrganic?: boolean;
+  harvestDate?: Date;
+  location?: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+    address: string;
+  };
+}
+
 export enum ViewState {
   INITIAL,
   SEARCHING,

@@ -4,7 +4,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
-import { toast } from "@/components/ui/toaster";
+import { toast } from "@/hooks/use-toast";
 
 interface LayoutProps {
   children: ReactNode;

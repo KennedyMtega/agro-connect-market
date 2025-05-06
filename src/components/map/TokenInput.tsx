@@ -18,8 +18,14 @@ const TokenInput: React.FC<TokenInputProps> = ({
   mapContainer,
   defaultPosition
 }) => {
-  // Skip token input UI since we're using a default token
-  return null;
+  // Using a predefined token - skip token input UI
+  React.useEffect(() => {
+    // Use the provided token automatically
+    const mapboxToken = "pk.eyJ1Ijoia2VubnltdGVnYTEwMSIsImEiOiJjbTlzZnB4bWUwMDY5MmtzYjBrdmt0enF1In0.jbvpg1jOdiljzGc2CQJPZg";
+    setAccessToken(mapboxToken);
+  }, [setAccessToken]);
+  
+  return null; // No UI needed since we're using a predefined token
 };
 
 export default TokenInput;
