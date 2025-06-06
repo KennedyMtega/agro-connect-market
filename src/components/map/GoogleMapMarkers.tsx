@@ -50,7 +50,7 @@ const GoogleMapMarkers: React.FC<GoogleMapMarkersProps> = ({ map, vendors, onVen
       vendors.forEach(vendor => {
         bounds.extend({ lat: vendor.location.lat, lng: vendor.location.lng });
       });
-      map.fitBounds(bounds, { padding: 50 });
+      map.fitBounds(bounds, 50);
     }
 
     console.log(`Added ${vendors.length} vendor markers`);
