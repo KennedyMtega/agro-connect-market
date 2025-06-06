@@ -45,8 +45,8 @@ const Search = () => {
   };
 
   return (
-    <Layout>
-      <div className="relative h-[calc(100vh-64px)]">
+    <Layout hideFooter={true}>
+      <div className="relative h-[calc(100vh-64px)] overflow-hidden">
         {/* Google Map Container */}
         <GoogleMapContainer 
           onMapLoad={handleMapLoad}
