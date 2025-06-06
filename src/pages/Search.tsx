@@ -1,26 +1,37 @@
 
-import { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import Layout from "@/components/layout/Layout";
-import MapView from "@/components/map/MapView";
-import CropSearchResults from "@/components/search/CropSearchResults";
+import GoogleMapContainer from "@/components/map/GoogleMapContainer";
+import GoogleMapMarkers from "@/components/map/GoogleMapMarkers";
+import BottomCard from "@/components/map/BottomCard";
+import SearchResultsDrawer from "@/components/search/SearchResultsDrawer";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Map } from "lucide-react";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { ViewState } from "@/types/map";
-import { useMapViewState } from "@/components/map/useMapViewState";
+import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useGoogleMapState } from "@/hooks/useGoogleMapState";
 
 const Search = () => {
   const { totalItems } = useCart();
   const navigate = useNavigate();
-  const mapState = useMapViewState();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showResults, setShowResults] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  const {
+    map,
+    searchQuery,
+    showResults,
+    selectedVendor,
+    isSearching,
+    vendors,
+    handleMapLoad,
+    handleSearch,
+    handleVendorSelect,
+    handleCloseVendor,
+    handleViewVendorDetails,
+    setShowResults
+  } = useGoogleMapState();
 
   // Focus search input on mount
   useEffect(() => {
@@ -28,17 +39,6 @@ const Search = () => {
       searchInputRef.current.focus();
     }
   }, []);
-  
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim()) {
-      mapState.setSearchTerm(query);
-      mapState.handleSearch();
-      setShowResults(true);
-    } else {
-      setShowResults(false);
-    }
-  };
 
   const handleCartClick = () => {
     navigate("/cart");
@@ -47,10 +47,20 @@ const Search = () => {
   return (
     <Layout>
       <div className="relative h-[calc(100vh-64px)]">
-        {/* Map Container - Take full height */}
-        <div className="absolute inset-0 w-full h-full">
-          <MapView />
-        </div>
+        {/* Google Map Container */}
+        <GoogleMapContainer 
+          onMapLoad={handleMapLoad}
+          className="absolute inset-0 w-full h-full"
+        />
+        
+        {/* Map Markers */}
+        {map && vendors.length > 0 && (
+          <GoogleMapMarkers
+            map={map}
+            vendors={vendors}
+            onVendorSelect={handleVendorSelect}
+          />
+        )}
         
         {/* Search Bar - Fixed on top */}
         <div className="absolute top-0 left-0 right-0 p-4 z-20">
@@ -77,34 +87,21 @@ const Search = () => {
           </Button>
         </div>
         
-        {/* Results Drawer - Shows up when searching */}
-        <Drawer 
-          open={showResults} 
-          onOpenChange={setShowResults}
-        >
-          <DrawerContent className="max-h-[70vh] rounded-t-xl">
-            <div className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">
-                  Results for "{searchQuery}"
-                </h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowResults(false)}
-                >
-                  <Map className="mr-2 h-4 w-4" /> View Map
-                </Button>
-              </div>
-              
-              <CropSearchResults 
-                vendors={mapState.vendors}
-                onSelectVendor={mapState.handleSelectVendor}
-                searchQuery={searchQuery}
-              />
-            </div>
-          </DrawerContent>
-        </Drawer>
+        {/* Bottom Card for Selected Vendor */}
+        <BottomCard
+          vendor={selectedVendor}
+          onClose={handleCloseVendor}
+          onViewDetails={handleViewVendorDetails}
+        />
+        
+        {/* Search Results Drawer */}
+        <SearchResultsDrawer
+          isOpen={showResults}
+          onClose={() => setShowResults(false)}
+          vendors={vendors}
+          searchQuery={searchQuery}
+          onVendorSelect={handleVendorSelect}
+        />
       </div>
     </Layout>
   );
