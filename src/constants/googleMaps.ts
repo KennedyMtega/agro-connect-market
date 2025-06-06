@@ -15,5 +15,5 @@ export const MAP_STYLES = [
   }
 ];
 
-// You'll need to get this from Google Cloud Console
-export const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
+// Updated with the provided API key
+export const GOOGLE_MAPS_API_KEY = "AIzaSyBcM1zQVcAZ3BzX0ygQhX9R2bbooON6xDk";

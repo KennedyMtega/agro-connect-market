@@ -64,13 +64,7 @@ const MapViewContent: React.FC<MapViewContentProps> = ({
     case ViewState.INITIAL:
       return (
         <>
-          <TokenInput 
-            accessToken={accessToken} 
-            setAccessToken={setAccessToken}
-            map={map}
-            mapContainer={mapContainer}
-            defaultPosition={{ lat: 40.712776, lng: -74.005974 }}
-          />
+          <TokenInput />
           <SearchOverlay 
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
