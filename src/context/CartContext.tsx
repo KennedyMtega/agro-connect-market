@@ -221,7 +221,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const lastUpdate = new Date(order.tracking?.lastUpdate || order.createdAt).getTime();
           const minutesSinceUpdate = (now.getTime() - lastUpdate) / (1000 * 60);
 
-          let newStatus = order.status;
+          let newStatus: Order['status'] = order.status;
           let newTracking = { ...(order.tracking!) };
 
           if (order.status === 'pending' && minutesSinceUpdate > 0.25) { // 15 seconds
