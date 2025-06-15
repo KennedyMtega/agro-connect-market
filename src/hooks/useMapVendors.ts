@@ -5,21 +5,18 @@ import { Vendor } from '@/types/map';
 export const useMapVendors = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
-  // Comprehensive mock vendors with diverse locations and products
+  // Comprehensive mock vendors with diverse locations and products in Dar es Salaam
   const mockVendors: Vendor[] = [
     {
       id: "vendor-1",
-      name: "Green Valley Organic Farm",
-      location: {
-        lat: 40.7128,
-        lng: -74.0060
-      },
+      name: "Kariakoo Market Greens",
+      location: { lat: -6.8235, lng: 39.2790 },
       distance: 1.2,
       rating: 4.9,
       crops: [
         { id: "crop-1", name: "Organic Basmati Rice", category: "Grain", pricePerUnit: 8.99, unit: "kg", quantityAvailable: 250 },
         { id: "crop-2", name: "Heirloom Tomatoes", category: "Vegetable", pricePerUnit: 4.50, unit: "kg", quantityAvailable: 80 },
-        { id: "crop-3", name: "Fresh Spinach", category: "Leafy Green", pricePerUnit: 3.25, unit: "kg", quantityAvailable: 45 },
+        { id: "crop-3", name: "Fresh Spinach (Mchicha)", category: "Leafy Green", pricePerUnit: 3.25, unit: "kg", quantityAvailable: 45 },
         { id: "crop-4", name: "Organic Carrots", category: "Root Vegetable", pricePerUnit: 2.75, unit: "kg", quantityAvailable: 120 }
       ],
       estimatedDelivery: "15-25 min",
@@ -27,11 +24,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-2",
-      name: "Sunshine Citrus Grove",
-      location: {
-        lat: 40.7589,
-        lng: -73.9851
-      },
+      name: "Kisutu Fresh Produce",
+      location: { lat: -6.8160, lng: 39.2845 },
       distance: 2.8,
       rating: 4.7,
       crops: [
@@ -45,11 +39,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-3",
-      name: "Heritage Grain Co.",
-      location: {
-        lat: 40.6892,
-        lng: -74.0445
-      },
+      name: "Kivukoni Fish & Veggies",
+      location: { lat: -6.8189, lng: 39.2931 },
       distance: 3.5,
       rating: 4.8,
       crops: [
@@ -63,11 +54,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-4",
-      name: "Mountain View Berry Farm",
-      location: {
-        lat: 40.7831,
-        lng: -73.9712
-      },
+      name: "Upanga Farm Store",
+      location: { lat: -6.8045, lng: 39.2778 },
       distance: 4.1,
       rating: 4.6,
       crops: [
@@ -81,15 +69,12 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-5",
-      name: "Riverside Vegetable Gardens",
-      location: {
-        lat: 40.6782,
-        lng: -73.9442
-      },
+      name: "Mbezi Beach Organics",
+      location: { lat: -6.7225, lng: 39.2210 },
       distance: 4.8,
       rating: 4.5,
       crops: [
-        { id: "crop-17", name: "Bell Peppers Mix", category: "Vegetable", pricePerUnit: 5.99, unit: "kg", quantityAvailable: 90 },
+        { id: "crop-17", name: "Bell Peppers (Pilipili Hoho)", category: "Vegetable", pricePerUnit: 5.99, unit: "kg", quantityAvailable: 90 },
         { id: "crop-18", name: "Cucumber", category: "Vegetable", pricePerUnit: 2.99, unit: "kg", quantityAvailable: 110 },
         { id: "crop-19", name: "Zucchini", category: "Vegetable", pricePerUnit: 3.50, unit: "kg", quantityAvailable: 75 },
         { id: "crop-20", name: "Eggplant", category: "Vegetable", pricePerUnit: 4.75, unit: "kg", quantityAvailable: 55 }
@@ -99,11 +84,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-6",
-      name: "Golden Harvest Orchard",
-      location: {
-        lat: 40.7505,
-        lng: -73.9934
-      },
+      name: "Sinza Family Farm",
+      location: { lat: -6.7865, lng: 39.2272 },
       distance: 2.3,
       rating: 4.9,
       crops: [
@@ -117,11 +99,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-7",
-      name: "Coastal Herb & Spice Farm",
-      location: {
-        lat: 40.6928,
-        lng: -74.0060
-      },
+      name: "Oysterbay Farmers Market",
+      location: { lat: -6.7720, lng: 39.2798 },
       distance: 3.9,
       rating: 4.7,
       crops: [
@@ -135,11 +114,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-8",
-      name: "Prairie Grain & Seed Co.",
-      location: {
-        lat: 40.7282,
-        lng: -73.7949
-      },
+      name: "Ilala Boma Provisions",
+      location: { lat: -6.8288, lng: 39.2711 },
       distance: 6.2,
       rating: 4.4,
       crops: [
@@ -153,11 +129,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-9",
-      name: "Urban Microgreens Lab",
-      location: {
-        lat: 40.7614,
-        lng: -73.9776
-      },
+      name: "Kinondoni Fresh Harvest",
+      location: { lat: -6.7785, lng: 39.2471 },
       distance: 1.8,
       rating: 4.8,
       crops: [
@@ -171,11 +144,8 @@ export const useMapVendors = () => {
     },
     {
       id: "vendor-10",
-      name: "Tropical Delights Farm",
-      location: {
-        lat: 40.6643,
-        lng: -73.9385
-      },
+      name: "Temeke Farm-to-Table",
+      location: { lat: -6.8570, lng: 39.2675 },
       distance: 5.7,
       rating: 4.6,
       crops: [

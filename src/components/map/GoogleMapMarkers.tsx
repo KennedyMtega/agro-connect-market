@@ -37,13 +37,24 @@ const GoogleMapMarkers: React.FC<GoogleMapMarkersProps> = ({ map, vendors, onVen
       // Add click listener
       marker.addListener('click', () => {
         onVendorSelect(vendor);
-        map.panTo({ lat: vendor.location.lat, lng: vendor.location.lng });
-        map.setZoom(16);
       });
 
       markersRef.current.push(marker);
     });
 
+    // Fit map to show all vendors
+    if (vendors.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      vendors.forEach(vendor => {
+        bounds.extend({ lat: vendor.location.lat, lng: vendor.location.lng });
+      });
+      map.fitBounds(bounds, 50); // 50px padding
+    } else if (vendors.length === 1 && vendors[0]) {
+      // If there's only one vendor (e.g., from a search), center on it
+      map.panTo({ lat: vendors[0].location.lat, lng: vendors[0].location.lng });
+      map.setZoom(15);
+    }
+    
     if (vendors.length > 0) {
       console.log(`Added ${vendors.length} vendor markers`);
     }
