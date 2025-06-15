@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -8,15 +7,16 @@ import { Button } from "@/components/ui/button";
 import { 
   Truck, 
   Package, 
-  CreditCard, 
-  Clock, 
   CheckCircle, 
   ShoppingBag, 
   XCircle,
-  MapPin
+  MapPin,
+  Clock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/context/CartContext";
+import { Order } from "@/types";
 
 // Mock data for orders
 const mockOrders = [
@@ -89,7 +89,11 @@ const mockOrders = [
   }
 ];
 
-const OrderCard = ({ order }: { order: any }) => {
+const OrderCard = ({ order }: { order: Order }) => {
+  const deliveredEvent = order.status === 'delivered' 
+    ? order.tracking?.timeline.find(t => t.status === 'Delivered') 
+    : null;
+
   return (
     <Card className="mb-4">
       <CardHeader className="pb-2">
@@ -112,11 +116,11 @@ const OrderCard = ({ order }: { order: any }) => {
                   order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
             </div>
-            <CardDescription>Placed on {order.date}</CardDescription>
+            <CardDescription>Placed on {new Date(order.createdAt).toLocaleDateString()}</CardDescription>
           </div>
           <div className="text-right">
-            <span className="font-bold">${order.total.toFixed(2)}</span>
-            <div className="text-xs text-muted-foreground">From {order.seller}</div>
+            <span className="font-bold">{(order.totalAmount).toLocaleString()} TZS</span>
+            <div className="text-xs text-muted-foreground">From {order.sellerName}</div>
           </div>
         </div>
       </CardHeader>
@@ -128,10 +132,10 @@ const OrderCard = ({ order }: { order: any }) => {
               {order.items.map((item: any) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>
-                    {item.quantity} × {item.name}
+                    {item.quantity} × {item.cropName}
                   </span>
                   <span className="font-medium">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {(item.totalPrice).toLocaleString()} TZS
                   </span>
                 </div>
               ))}
@@ -151,21 +155,21 @@ const OrderCard = ({ order }: { order: any }) => {
             {order.status === "in_transit" && (
               <div className="flex items-center text-blue-600">
                 <Truck className="h-4 w-4 mr-2" />
-                <span className="text-sm">{order.tracking.currentStatus}</span>
+                <span className="text-sm">{order.tracking?.currentStatus}</span>
               </div>
             )}
             
-            {order.status === "delivered" && (
+            {order.status === "delivered" && deliveredEvent && (
               <div className="flex items-center text-green-600">
                 <CheckCircle className="h-4 w-4 mr-2" />
-                <span className="text-sm">Delivered on {order.delivery.deliveredAt}</span>
+                <span className="text-sm">Delivered on {new Date(deliveredEvent.time).toLocaleString()}</span>
               </div>
             )}
             
             {order.status === "cancelled" && (
               <div className="flex items-center text-red-600">
                 <XCircle className="h-4 w-4 mr-2" />
-                <span className="text-sm">{order.cancellation.reason}</span>
+                <span className="text-sm">Cancelled</span>
               </div>
             )}
             
@@ -178,16 +182,18 @@ const OrderCard = ({ order }: { order: any }) => {
                 </Link>
               )}
               
-              <Button variant="outline" size="sm">
-                View Details
-              </Button>
+              <Link to={`/order/${order.id}/tracking`}>
+                <Button variant="outline" size="sm">
+                  View Details
+                </Button>
+              </Link>
             </div>
           </div>
           
-          {order.status === "in_transit" && (
+          {order.status === "in_transit" && order.tracking?.currentLocation?.address && (
             <div className="mt-2 text-xs text-muted-foreground flex items-center">
               <MapPin className="h-3 w-3 mr-1" />
-              <span>Currently {order.tracking.currentLocation}</span>
+              <span>Currently {order.tracking.currentLocation.address}</span>
             </div>
           )}
         </div>
@@ -224,12 +230,13 @@ const EmptyState = ({ type }: { type: string }) => (
 
 const MyOrders = () => {
   const [activeTab, setActiveTab] = useState("all");
+  const { orders } = useCart();
   
-  const activeOrders = mockOrders.filter(order => 
+  const activeOrders = orders.filter(order => 
     order.status === "pending" || order.status === "in_transit"
   );
   
-  const completedOrders = mockOrders.filter(order => 
+  const completedOrders = orders.filter(order => 
     order.status === "delivered" || order.status === "cancelled"
   );
 
@@ -268,8 +275,8 @@ const MyOrders = () => {
           </TabsList>
           
           <TabsContent value="all">
-            {mockOrders.length > 0 ? (
-              mockOrders.map(order => (
+            {orders.length > 0 ? (
+              orders.map(order => (
                 <OrderCard key={order.id} order={order} />
               ))
             ) : (

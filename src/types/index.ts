@@ -78,7 +78,8 @@ export interface Location {
 export interface Order {
   id: string;
   buyerId: string;
-  sellerId: string;
+  sellerId:string;
+  sellerName?: string;
   items: OrderItem[];
   status: 'pending' | 'confirmed' | 'in_transit' | 'delivered' | 'cancelled';
   totalAmount: number;

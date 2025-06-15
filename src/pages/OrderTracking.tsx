@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   Truck,
@@ -13,11 +12,12 @@ import {
   Package,
   ShoppingBag,
   Store,
-  Clock,
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useCart } from "@/context/CartContext";
+import { Order, OrderTracking as OrderTrackingType } from "@/types";
 
 // Mock order data with tracking details
 const mockOrderWithTracking = {
@@ -66,32 +66,41 @@ const mockOrderWithTracking = {
 };
 
 const OrderTracking = () => {
-  const { id } = useParams();
-  const [order, setOrder] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams<{ id: string }>();
+  const { getOrderById } = useCart();
+  const [order, setOrder] = useState<Order | null | undefined>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
-    // In a real app, we would fetch the order data with the tracking information
-    // For this demo, we'll simulate a network request
-    setTimeout(() => {
-      setOrder(mockOrderWithTracking);
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+    if (id) {
+      setOrder(getOrderById(id));
+    }
+  }, [id, getOrderById]);
+  
+  useEffect(() => {
+    // Re-fetch order details periodically to get updates from simulation
+    if (!id) return;
+    const interval = setInterval(() => {
+      setOrder(getOrderById(id));
+    }, 5000); // refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, [id, getOrderById]);
 
   useEffect(() => {
-    // In a real app, we would load a map here
-    if (!loading && order) {
-      const timer = setTimeout(() => {
-        setMapLoaded(true);
-      }, 1500);
-      
+    if (order) {
+      const timer = setTimeout(() => setMapLoaded(true), 1500);
       return () => clearTimeout(timer);
     }
-  }, [loading, order]);
+  }, [order]);
+  
+  const getProgress = (tracking: OrderTrackingType | undefined) => {
+    if (!tracking || !tracking.timeline) return 0;
+    const completedSteps = tracking.timeline.filter(t => t.completed).length;
+    const totalSteps = tracking.timeline.length + 1; // +1 for delivery
+    return (completedSteps / totalSteps) * 100;
+  }
 
-  if (loading) {
+  if (order === undefined) {
     return (
       <Layout>
         <div className="container py-12 flex items-center justify-center">
@@ -104,7 +113,7 @@ const OrderTracking = () => {
     );
   }
 
-  if (!order) {
+  if (order === null) {
     return (
       <Layout>
         <div className="container py-12">
@@ -135,7 +144,7 @@ const OrderTracking = () => {
             </Link>
             <h1 className="text-3xl font-bold tracking-tight">Tracking Order #{order.id}</h1>
             <p className="text-muted-foreground">
-              Placed on {order.date} • Estimated delivery by {order.estimatedDelivery}
+              Placed on {new Date(order.createdAt).toLocaleString()} • Estimated delivery by {new Date(order.estimatedDelivery!).toLocaleString()}
             </p>
           </div>
         </div>
@@ -170,11 +179,11 @@ const OrderTracking = () => {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <Truck className="h-4 w-4 text-primary" />
-                            <span>{order.tracking.currentStatus}</span>
+                            <span>{order.tracking?.currentStatus}</span>
                           </div>
-                          <div className="text-sm">{order.tracking.estimatedArrival} away</div>
+                          <div className="text-sm">{order.tracking?.currentLocation?.address}</div>
                         </div>
-                        <Progress value={order.tracking.progress} className="h-2" />
+                        <Progress value={getProgress(order.tracking)} className="h-2" />
                       </div>
                     </div>
                   </div>
@@ -191,35 +200,37 @@ const OrderTracking = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Driver information */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium">Driver Information</h4>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {order.tracking.driver.name.split(' ').map((n: string) => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{order.tracking.driver.name}</p>
-                      <p className="text-sm text-muted-foreground">Bolt Driver</p>
+                {order.tracking?.driver && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium">Driver Information</h4>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {order.tracking.driver.name.split(' ').map((n: string) => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{order.tracking.driver.name}</p>
+                        <p className="text-sm text-muted-foreground">Partner Driver</p>
+                      </div>
+                      <Button variant="outline" size="icon" className="rounded-full ml-auto">
+                        <Phone className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button variant="outline" size="icon" className="rounded-full ml-auto">
-                      <Phone className="h-4 w-4" />
-                    </Button>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Vehicle</span>
+                        <span className="font-medium">
+                          {order.tracking.driver.vehicle.color} {order.tracking.driver.vehicle.make} {order.tracking.driver.vehicle.model}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">License Plate</span>
+                        <span className="font-medium">{order.tracking.driver.vehicle.plate}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Vehicle</span>
-                      <span className="font-medium">
-                        {order.tracking.driver.vehicle.color} {order.tracking.driver.vehicle.make} {order.tracking.driver.vehicle.model}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">License Plate</span>
-                      <span className="font-medium">{order.tracking.driver.vehicle.plate}</span>
-                    </div>
-                  </div>
-                </div>
+                )}
                 
                 <Separator />
                 
@@ -233,8 +244,7 @@ const OrderTracking = () => {
                       </div>
                       <div className="ml-3">
                         <p className="text-sm font-medium">Pickup Location</p>
-                        <p className="text-sm text-muted-foreground">{order.seller.name}</p>
-                        <p className="text-sm text-muted-foreground">{order.seller.address}</p>
+                        <p className="text-sm text-muted-foreground">{order.sellerName}</p>
                       </div>
                     </div>
                     
@@ -244,7 +254,7 @@ const OrderTracking = () => {
                       </div>
                       <div className="ml-3">
                         <p className="text-sm font-medium">Delivery Location</p>
-                        <p className="text-sm text-muted-foreground">{order.deliveryAddress}</p>
+                        <p className="text-sm text-muted-foreground">{order.deliveryAddress.address}</p>
                       </div>
                     </div>
                   </div>
@@ -259,17 +269,17 @@ const OrderTracking = () => {
                     {order.items.map((item: any) => (
                       <div key={item.id} className="flex justify-between">
                         <span>
-                          {item.quantity} × {item.name}
+                          {item.quantity} × {item.cropName}
                         </span>
                         <span className="font-medium">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {item.totalPrice.toLocaleString()} TZS
                         </span>
                       </div>
                     ))}
                     <Separator className="my-1" />
                     <div className="flex justify-between font-medium">
                       <span>Total</span>
-                      <span>${order.total.toFixed(2)}</span>
+                      <span>{order.totalAmount.toLocaleString()} TZS</span>
                     </div>
                   </div>
                 </div>
@@ -289,7 +299,7 @@ const OrderTracking = () => {
                   <div className="absolute left-6 top-0 bottom-0 w-px bg-muted"></div>
                   
                   <div className="space-y-8">
-                    {order.tracking.timeline.map((event: any, index: number) => (
+                    {order.tracking?.timeline.map((event: any, index: number) => (
                       <div key={index} className="flex items-start">
                         <div className={`relative flex items-center justify-center w-12 h-12 rounded-full mr-4 flex-shrink-0
                           ${event.completed 
@@ -299,20 +309,20 @@ const OrderTracking = () => {
                             : 'bg-muted text-muted-foreground'
                           }`}
                         >
-                          {event.status === "Order Placed" && <ShoppingBag className="h-5 w-5" />}
-                          {event.status === "Order Confirmed" && <CheckCircle className="h-5 w-5" />}
-                          {event.status === "Preparing Your Order" && <Package className="h-5 w-5" />}
-                          {event.status === "Driver Assigned" && <Truck className="h-5 w-5" />}
-                          {event.status === "On The Way" && <Truck className="h-5 w-5" />}
-                          {event.status === "Arrived at Location" && <MapPin className="h-5 w-5" />}
-                          {event.status === "Order Delivered" && <CheckCircle className="h-5 w-5" />}
+                          {event.status.includes("Placed") && <ShoppingBag className="h-5 w-5" />}
+                          {event.status.includes("Confirmed") && <CheckCircle className="h-5 w-5" />}
+                          {event.status.includes("Preparing") && <Package className="h-5 w-5" />}
+                          {event.status.includes("Driver") && <Truck className="h-5 w-5" />}
+                          {event.status.includes("On The Way") && <Truck className="h-5 w-5" />}
+                          {event.status.includes("Arrived") && <MapPin className="h-5 w-5" />}
+                          {event.status.includes("Delivered") && <CheckCircle className="h-5 w-5" />}
                         </div>
                         <div className="flex-1">
                           <h4 className={`text-sm font-medium ${event.current ? 'text-primary' : ''}`}>
                             {event.status}
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            {event.time || "Pending"}
+                            {event.time ? new Date(event.time).toLocaleString() : "Pending"}
                           </p>
                         </div>
                       </div>
