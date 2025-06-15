@@ -89,6 +89,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         // Update quantity if item exists
         const newItems = [...prevItems];
         newItems[existingItemIndex].quantity += quantity;
+
+        toast({
+          title: "Cart Updated",
+          description: `Quantity of ${crop.name} updated to ${newItems[existingItemIndex].quantity}.`,
+        });
+        
         return newItems;
       } else {
         // Add new item if it doesn't exist

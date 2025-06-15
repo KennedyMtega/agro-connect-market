@@ -6,6 +6,7 @@ import GoogleMapContainer from "@/components/map/GoogleMapContainer";
 import GoogleMapMarkers from "@/components/map/GoogleMapMarkers";
 import BottomCard from "@/components/map/BottomCard";
 import SearchResultsDrawer from "@/components/search/SearchResultsDrawer";
+import VendorDetailsDrawer from "@/components/vendor/VendorDetailsDrawer";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -23,6 +24,7 @@ const Search = () => {
     searchQuery,
     showResults,
     selectedVendor,
+    detailedVendor,
     isSearching,
     vendors,
     handleMapLoad,
@@ -30,6 +32,7 @@ const Search = () => {
     handleVendorSelect,
     handleCloseVendor,
     handleViewVendorDetails,
+    handleCloseDetailedVendor,
     setShowResults
   } = useGoogleMapState();
 
@@ -101,6 +104,13 @@ const Search = () => {
           vendors={vendors}
           searchQuery={searchQuery}
           onVendorSelect={handleVendorSelect}
+        />
+
+        {/* Vendor Details Drawer */}
+        <VendorDetailsDrawer
+          vendor={detailedVendor}
+          isOpen={!!detailedVendor}
+          onClose={handleCloseDetailedVendor}
         />
       </div>
     </Layout>

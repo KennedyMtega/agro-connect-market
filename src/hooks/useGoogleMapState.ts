@@ -9,6 +9,7 @@ export const useGoogleMapState = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [detailedVendor, setDetailedVendor] = useState<Vendor | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { vendors, setVendors, mockVendors } = useMapVendors();
   const { toast } = useToast();
@@ -55,6 +56,7 @@ export const useGoogleMapState = () => {
   const handleVendorSelect = useCallback((vendor: Vendor) => {
     setSelectedVendor(vendor);
     setShowResults(false);
+    setDetailedVendor(null); // Close detail view if open
     
     if (map) {
       map.panTo({ lat: vendor.location.lat, lng: vendor.location.lng });
@@ -83,24 +85,25 @@ export const useGoogleMapState = () => {
     
     // Reset map zoom when closing vendor details
     if (map) {
-      map.setZoom(13);
+      map.setZoom(12);
     }
   }, [map]);
 
   const handleViewVendorDetails = useCallback((vendor: Vendor) => {
-    // Navigate to vendor details page or show detailed view
-    console.log('View vendor details:', vendor);
-    toast({
-      title: "Vendor Details",
-      description: `Viewing details for ${vendor.name}`,
-    });
-  }, [toast]);
+    setDetailedVendor(vendor);
+    setSelectedVendor(null); // Hide bottom card
+  }, []);
+
+  const handleCloseDetailedVendor = useCallback(() => {
+    setDetailedVendor(null);
+  }, []);
 
   return {
     map,
     searchQuery,
     showResults,
     selectedVendor,
+    detailedVendor,
     isSearching,
     vendors,
     handleMapLoad,
@@ -108,6 +111,7 @@ export const useGoogleMapState = () => {
     handleVendorSelect,
     handleCloseVendor,
     handleViewVendorDetails,
+    handleCloseDetailedVendor,
     setShowResults
   };
 };

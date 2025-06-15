@@ -1,11 +1,10 @@
-
 // Google Maps configuration constants
 export const DEFAULT_MAP_CENTER = {
-  lat: 40.712776,
-  lng: -74.005974
+  lat: -6.792354,
+  lng: 39.208328
 };
 
-export const DEFAULT_MAP_ZOOM = 13;
+export const DEFAULT_MAP_ZOOM = 12;
 
 export const MAP_STYLES = [
   {
