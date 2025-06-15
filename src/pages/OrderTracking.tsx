@@ -18,6 +18,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useCart } from "@/context/CartContext";
 import { Order, OrderTracking as OrderTrackingType } from "@/types";
+import MapboxMap from "@/components/map/MapboxMap";
 
 // Mock order data with tracking details
 const mockOrderWithTracking = {
@@ -67,36 +68,19 @@ const mockOrderWithTracking = {
 
 const OrderTracking = () => {
   const { id } = useParams<{ id: string }>();
-  const { getOrderById } = useCart();
+  const { getOrderById, orders } = useCart(); // Get orders to trigger re-render
   const [order, setOrder] = useState<Order | null | undefined>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     if (id) {
       setOrder(getOrderById(id));
     }
-  }, [id, getOrderById]);
-  
-  useEffect(() => {
-    // Re-fetch order details periodically to get updates from simulation
-    if (!id) return;
-    const interval = setInterval(() => {
-      setOrder(getOrderById(id));
-    }, 5000); // refresh every 5 seconds
-    return () => clearInterval(interval);
-  }, [id, getOrderById]);
+  }, [id, getOrderById, orders]); // Depend on orders to get updates
 
-  useEffect(() => {
-    if (order) {
-      const timer = setTimeout(() => setMapLoaded(true), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [order]);
-  
   const getProgress = (tracking: OrderTrackingType | undefined) => {
     if (!tracking || !tracking.timeline) return 0;
     const completedSteps = tracking.timeline.filter(t => t.completed).length;
-    const totalSteps = tracking.timeline.length + 1; // +1 for delivery
+    const totalSteps = tracking.timeline.length > 5 ? tracking.timeline.length : 5; // A reasonable total
     return (completedSteps / totalSteps) * 100;
   }
 
@@ -134,6 +118,8 @@ const OrderTracking = () => {
     );
   }
 
+  const driverLocation = order.tracking?.currentLocation?.coordinates;
+
   return (
     <Layout>
       <div className="container py-6">
@@ -160,34 +146,35 @@ const OrderTracking = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {!mapLoaded ? (
-                  <div className="h-[400px] bg-slate-100 rounded-md flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Loading map...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative h-[400px] bg-slate-100 rounded-md overflow-hidden">
-                    {/* This would be replaced with an actual map component */}
+                <div className="relative h-[400px] bg-slate-100 rounded-md overflow-hidden">
+                  {driverLocation ? (
+                    <MapboxMap
+                      longitude={driverLocation.longitude}
+                      latitude={driverLocation.latitude}
+                      key={`${driverLocation.longitude}-${driverLocation.latitude}`}
+                    />
+                  ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-4xl">🗺️</div>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background/90 to-transparent"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="bg-background rounded-lg p-3 shadow-md">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Truck className="h-4 w-4 text-primary" />
-                            <span>{order.tracking?.currentStatus}</span>
-                          </div>
-                          <div className="text-sm">{order.tracking?.currentLocation?.address}</div>
-                        </div>
-                        <Progress value={getProgress(order.tracking)} className="h-2" />
+                       <div className="text-center">
+                        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Awaiting driver location...</p>
                       </div>
                     </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background/90 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <div className="bg-background rounded-lg p-3 shadow-md">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Truck className="h-4 w-4 text-primary" />
+                          <span>{order.tracking?.currentStatus}</span>
+                        </div>
+                        <div className="text-sm">{order.tracking?.currentLocation?.address}</div>
+                      </div>
+                      <Progress value={getProgress(order.tracking)} className="h-2" />
+                    </div>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>
