@@ -1,8 +1,8 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { Vendor } from '@/types/map';
 import { useMapVendors } from './useMapVendors';
 import { useToast } from './use-toast';
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants/googleMaps';
 
 export const useGoogleMapState = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -83,9 +83,10 @@ export const useGoogleMapState = () => {
   const handleCloseVendor = useCallback(() => {
     setSelectedVendor(null);
     
-    // Reset map zoom when closing vendor details
+    // Reset map view when closing vendor details
     if (map) {
-      map.setZoom(12);
+      map.panTo(DEFAULT_MAP_CENTER);
+      map.setZoom(DEFAULT_MAP_ZOOM);
     }
   }, [map]);
 

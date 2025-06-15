@@ -12,7 +12,7 @@ const GoogleMapMarkers: React.FC<GoogleMapMarkersProps> = ({ map, vendors, onVen
   const markersRef = useRef<google.maps.Marker[]>([]);
 
   useEffect(() => {
-    if (!map || vendors.length === 0) return;
+    if (!map) return;
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -44,16 +44,9 @@ const GoogleMapMarkers: React.FC<GoogleMapMarkersProps> = ({ map, vendors, onVen
       markersRef.current.push(marker);
     });
 
-    // Fit map to show all vendors
-    if (vendors.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      vendors.forEach(vendor => {
-        bounds.extend({ lat: vendor.location.lat, lng: vendor.location.lng });
-      });
-      map.fitBounds(bounds, 50);
+    if (vendors.length > 0) {
+      console.log(`Added ${vendors.length} vendor markers`);
     }
-
-    console.log(`Added ${vendors.length} vendor markers`);
 
     return () => {
       markersRef.current.forEach(marker => marker.setMap(null));
