@@ -18,7 +18,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useCart } from "@/context/CartContext";
 import { Order, OrderTracking as OrderTrackingType } from "@/types";
-import MapboxMap from "@/components/map/MapboxMap";
+import GoogleMapContainer from "@/components/map/GoogleMapContainer";
 
 // Mock order data with tracking details
 const mockOrderWithTracking = {
@@ -148,11 +148,7 @@ const OrderTracking = () => {
               <CardContent>
                 <div className="relative h-[400px] bg-slate-100 rounded-md overflow-hidden">
                   {driverLocation ? (
-                    <MapboxMap
-                      longitude={driverLocation.longitude}
-                      latitude={driverLocation.latitude}
-                      key={`${driverLocation.longitude}-${driverLocation.latitude}`}
-                    />
+                    <GoogleMapContainer className="w-full h-full" />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                        <div className="text-center">

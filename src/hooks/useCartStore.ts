@@ -60,7 +60,7 @@ export const useCartStore = () => {
         newItems[existingItemIndex].quantity = newQuantity;
         toast({
           title: "Cart Updated",
-          description: `Quantity of ${crop.name} updated to ${newItems[existingItem-1] ? newItems[existingItemIndex].quantity : ''}.`,
+          description: `Quantity of ${crop.name} updated to ${newItems[existingItemIndex].quantity}.`,
         });
         return newItems;
       } else {
