@@ -1,375 +1,145 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { User, BuyerProfile, SellerProfile, AuthState } from "@/types";
-import { 
-  getMockUserByEmail, 
-  createMockUser, 
-  createMockBuyerProfile, 
-  createMockSellerProfile 
-} from "@/utils/authUtils";
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile, SellerProfile } from '@/types/database';
 
-interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  loginWithPhone: (phoneNumber: string, otp: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string, userType: "buyer" | "seller") => Promise<void>;
-  registerWithPhone: (phoneNumber: string, fullName: string, userType: "buyer" | "seller") => Promise<void>;
-  verifyPhone: (phoneNumber: string, otp: string) => Promise<void>;
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  sellerProfile: SellerProfile | null;
+  isLoading: boolean;
   logout: () => Promise<void>;
-  updateProfile: (userData: Partial<User>) => Promise<void>;
-  updateBuyerProfile: (buyerData: Partial<BuyerProfile>) => Promise<void>;
-  updateSellerProfile: (sellerData: Partial<SellerProfile>) => Promise<void>;
+  updateProfile: (data: Partial<Profile>) => Promise<void>;
 }
 
-const initialState: AuthState = {
+const initialState = {
   user: null,
-  buyerProfile: null,
+  session: null,
+  profile: null,
   sellerProfile: null,
   isLoading: true,
-  error: null,
 };
 
 export const AuthContext = createContext<AuthContextType>({
   ...initialState,
-  login: async () => {},
-  loginWithPhone: async () => {},
-  register: async () => {},
-  registerWithPhone: async () => {},
-  verifyPhone: async () => {},
   logout: async () => {},
   updateProfile: async () => {},
-  updateBuyerProfile: async () => {},
-  updateSellerProfile: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(initialState);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const checkAuth = async () => {
+  const fetchProfile = async (userId: string) => {
     try {
-      const mockUser = localStorage.getItem("agrouser");
-      
-      if (mockUser) {
-        const userData = JSON.parse(mockUser);
-        userData.createdAt = new Date(userData.createdAt);
-        
-        if (userData.userType === "buyer") {
-          setState({
-            ...state,
-            user: userData,
-            buyerProfile: createMockBuyerProfile(userData.id),
-            isLoading: false,
-          });
-        } else if (userData.userType === "seller") {
-          setState({
-            ...state,
-            user: userData,
-            sellerProfile: createMockSellerProfile(userData.id),
-            isLoading: false,
-          });
-        } else {
-          setState({
-            ...state,
-            user: userData,
-            isLoading: false,
-          });
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+      setProfile(profileData);
+
+      // If user is a seller, fetch seller profile
+      if (profileData?.user_type === 'seller') {
+        const { data: sellerData, error: sellerError } = await supabase
+          .from('seller_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!sellerError && sellerData) {
+          setSellerProfile(sellerData);
         }
-      } else {
-        setState({
-          ...state,
-          isLoading: false,
-        });
       }
     } catch (error) {
-      setState({
-        ...state,
-        error: "Authentication error",
-        isLoading: false,
-      });
+      console.error('Error fetching profile:', error);
     }
   };
 
   useEffect(() => {
-    checkAuth();
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Defer profile fetching to avoid deadlocks
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setSellerProfile(null);
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          setProfile(null);
+          setSellerProfile(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      const mockUser = getMockUserByEmail(email, password) || 
-        createMockUser(email, "Demo User", "buyer");
-
-      localStorage.setItem("agrouser", JSON.stringify(mockUser));
-
-      if (mockUser.userType === "buyer") {
-        setState({
-          ...state,
-          user: mockUser,
-          buyerProfile: createMockBuyerProfile(mockUser.id),
-          isLoading: false,
-        });
-      } else if (mockUser.userType === "seller") {
-        setState({
-          ...state,
-          user: mockUser,
-          sellerProfile: createMockSellerProfile(mockUser.id),
-          isLoading: false,
-        });
-      } else {
-        setState({
-          ...state,
-          user: mockUser,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Login failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const loginWithPhone = async (phoneNumber: string, otp: string) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      const mockUser = createMockUser("", "Demo User", "buyer", "phone", phoneNumber);
-      mockUser.isPhoneVerified = true;
-
-      localStorage.setItem("agrouser", JSON.stringify(mockUser));
-
-      setState({
-        ...state,
-        user: mockUser,
-        isLoading: false,
-      });
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Phone login failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const register = async (
-    email: string,
-    password: string,
-    fullName: string,
-    userType: "buyer" | "seller"
-  ) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      const mockUser = createMockUser(email, fullName, userType);
-      localStorage.setItem("agrouser", JSON.stringify(mockUser));
-
-      setState({
-        ...state,
-        user: mockUser,
-        isLoading: false,
-      });
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Registration failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const registerWithPhone = async (
-    phoneNumber: string,
-    fullName: string,
-    userType: "buyer" | "seller"
-  ) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      const mockUser = createMockUser("", fullName, userType, "phone", phoneNumber);
-      localStorage.setItem("agrouser", JSON.stringify(mockUser));
-
-      setState({
-        ...state,
-        user: mockUser,
-        isLoading: false,
-      });
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Phone registration failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const verifyPhone = async (phoneNumber: string, otp: string) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      if (state.user) {
-        const updatedUser = {
-          ...state.user,
-          isPhoneVerified: true,
-        };
-
-        localStorage.setItem("agrouser", JSON.stringify(updatedUser));
-
-        setState({
-          ...state,
-          user: updatedUser,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Phone verification failed",
-        isLoading: false,
-      });
-    }
-  };
-
   const logout = async () => {
-    setState({ ...state, isLoading: true, error: null });
-
     try {
-      localStorage.removeItem("agrouser");
-      setState({
-        ...initialState,
-        isLoading: false,
-      });
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setSellerProfile(null);
     } catch (error) {
-      setState({
-        ...state,
-        error: "Logout failed",
-        isLoading: false,
-      });
+      console.error('Error signing out:', error);
     }
   };
 
-  const updateProfile = async (userData: Partial<User>) => {
-    setState({ ...state, isLoading: true, error: null });
+  const updateProfile = async (data: Partial<Profile>) => {
+    if (!user) return;
 
     try {
-      if (state.user) {
-        const updatedUser = {
-          ...state.user,
-          ...userData,
-        };
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', user.id);
 
-        localStorage.setItem("agrouser", JSON.stringify(updatedUser));
+      if (error) throw error;
 
-        setState({
-          ...state,
-          user: updatedUser,
-          isLoading: false,
-        });
-      }
+      // Refresh profile data
+      await fetchProfile(user.id);
     } catch (error) {
-      setState({
-        ...state,
-        error: "Profile update failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const updateBuyerProfile = async (buyerData: Partial<BuyerProfile>) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      if (state.buyerProfile) {
-        const updatedBuyerProfile = {
-          ...state.buyerProfile,
-          ...buyerData,
-        };
-
-        setState({
-          ...state,
-          buyerProfile: updatedBuyerProfile,
-          isLoading: false,
-        });
-      } else {
-        const newBuyerProfile: BuyerProfile = {
-          id: `buyer-${state.user?.id || 'new'}`,
-          userId: state.user?.id || 'new',
-          deliveryPreferences: {},
-          paymentMethods: {},
-          notificationPreferences: {},
-          ...buyerData,
-        };
-
-        setState({
-          ...state,
-          buyerProfile: newBuyerProfile,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Buyer profile update failed",
-        isLoading: false,
-      });
-    }
-  };
-
-  const updateSellerProfile = async (sellerData: Partial<SellerProfile>) => {
-    setState({ ...state, isLoading: true, error: null });
-
-    try {
-      if (state.sellerProfile) {
-        const updatedSellerProfile = {
-          ...state.sellerProfile,
-          ...sellerData,
-        };
-
-        setState({
-          ...state,
-          sellerProfile: updatedSellerProfile,
-          isLoading: false,
-        });
-      } else {
-        const newSellerProfile: SellerProfile = {
-          id: `seller-${state.user?.id || 'new'}`,
-          userId: state.user?.id || 'new',
-          businessName: '',
-          verificationStatus: 'pending',
-          averageRating: 0,
-          totalRatings: 0,
-          ...sellerData,
-        };
-
-        setState({
-          ...state,
-          sellerProfile: newSellerProfile,
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      setState({
-        ...state,
-        error: "Seller profile update failed",
-        isLoading: false,
-      });
+      console.error('Error updating profile:', error);
+      throw error;
     }
   };
 
   return (
     <AuthContext.Provider
       value={{
-        ...state,
-        login,
-        loginWithPhone,
-        register,
-        registerWithPhone,
-        verifyPhone,
+        user,
+        session,
+        profile,
+        sellerProfile,
+        isLoading,
         logout,
         updateProfile,
-        updateBuyerProfile,
-        updateSellerProfile,
       }}
     >
       {children}

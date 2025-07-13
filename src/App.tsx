@@ -8,8 +8,7 @@ import { AuthProvider } from "@/context/auth/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import VerifyPhone from "./pages/VerifyPhone";
 import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
@@ -24,19 +23,19 @@ import OnBoarding from "./pages/OnBoarding";
 
 // Redirect component based on authentication status
 const RedirectToAuth = () => {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // If user is not logged in, show onboarding
+  // If user is not logged in, show auth
   if (!user) {
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/auth" />;
   }
   
   // If user is logged in, redirect based on type
-  return user.userType === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
+  return profile?.user_type === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
 };
 
 // Create a new instance of QueryClient
@@ -58,8 +57,7 @@ const App = () => (
               <Route path="/onboarding" element={<OnBoarding />} />
               
               {/* Auth routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="/verify-phone" element={<VerifyPhone />} />
               
               {/* Buyer routes */}
