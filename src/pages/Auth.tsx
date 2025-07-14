@@ -42,6 +42,12 @@ export default function Auth() {
       }
     };
     checkUser();
+
+    // Set user type from localStorage if available
+    const selectedType = localStorage.getItem('selectedUserType') as UserType;
+    if (selectedType) {
+      setSignUpData(prev => ({ ...prev, userType: selectedType }));
+    }
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -199,10 +205,17 @@ export default function Auth() {
 
       toast({
         title: "Account Created!",
-        description: "Welcome to Boltish Agro! Your account has been created successfully.",
+        description: "Welcome to AgroConnect! Your account has been created successfully.",
       });
 
-      // Will be redirected by RedirectToAuth component
+      // Clear stored user type
+      localStorage.removeItem('selectedUserType');
+      
+      // Redirect sellers to onboarding, buyers to search
+      if (signUpData.userType === 'seller') {
+        navigate('/seller-onboarding');
+      }
+      // Buyers will be redirected by RedirectToAuth component
     } catch (error) {
       console.error('Sign up error:', error);
       toast({
@@ -230,7 +243,7 @@ export default function Auth() {
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-green-800">
-              Boltish Agro
+              AgroConnect
             </CardTitle>
             <CardDescription>
               Tanzania's premier agricultural marketplace
@@ -309,7 +322,7 @@ export default function Auth() {
                   </div>
                   <div className="space-y-3">
                     <Label>Account Type</Label>
-                    <RadioGroup
+                     <RadioGroup
                       value={signUpData.userType}
                       onValueChange={(value: UserType) => setSignUpData(prev => ({ ...prev, userType: value }))}
                     >

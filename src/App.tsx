@@ -20,6 +20,8 @@ import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
 import OnBoarding from "./pages/OnBoarding";
+import RoleSelection from "./pages/RoleSelection";
+import SellerOnboarding from "./pages/SellerOnboarding";
 
 // Redirect component based on authentication status
 const RedirectToAuth = () => {
@@ -29,14 +31,9 @@ const RedirectToAuth = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // If user is not logged in, redirect to onboarding first, then auth
+  // If user is not logged in, redirect to role selection instead of onboarding
   if (!user) {
-    // Check if user has seen onboarding
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    if (!hasSeenOnboarding) {
-      return <Navigate to="/onboarding" />;
-    }
-    return <Navigate to="/auth" />;
+    return <Navigate to="/role-selection" />;
   }
   
   // If user is logged in, redirect based on type
@@ -65,8 +62,10 @@ const App = () => (
               {/* Root redirects based on auth status */}
               <Route path="/" element={<RedirectToAuth />} />
               
-              {/* Onboarding */}
+              {/* Role selection and onboarding */}
+              <Route path="/role-selection" element={<RoleSelection />} />
               <Route path="/onboarding" element={<OnBoarding />} />
+              <Route path="/seller-onboarding" element={<SellerOnboarding />} />
               
               {/* Auth routes */}
               <Route path="/auth" element={<Auth />} />
