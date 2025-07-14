@@ -35,7 +35,7 @@ const mockInventoryData = [
 ];
 
 const SellerDashboard = () => {
-  const { user, sellerProfile } = useAuth();
+  const { user, profile, sellerProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
@@ -45,7 +45,7 @@ const SellerDashboard = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back, {user?.fullName || "Seller"}! Here's what's happening today.
+              Welcome back, {profile?.full_name || "Seller"}! Here's what's happening today.
             </p>
           </div>
           <Button>+ Add New Crop</Button>

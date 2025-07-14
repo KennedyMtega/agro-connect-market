@@ -28,13 +28,13 @@ import { Badge } from "@/components/ui/badge";
 import Notifications from "@/components/Notifications";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const isBuyer = user?.userType === "buyer";
-  const isSeller = user?.userType === "seller";
+  const isBuyer = profile?.user_type === "buyer";
+  const isSeller = profile?.user_type === "seller";
 
   const handleLogout = async () => {
     await logout();
@@ -198,7 +198,7 @@ const Header = () => {
                   <Button variant="ghost" className="flex items-center gap-2">
                     <User className="h-5 w-5" />
                     <span className="hidden md:block text-sm">
-                      {user.fullName}
+                      {profile?.full_name}
                     </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>

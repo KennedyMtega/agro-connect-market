@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserType }) => {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -25,7 +25,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserT
   }
 
   // If a specific user type is required, check that condition
-  if (requiredUserType && user.userType !== requiredUserType) {
+  if (requiredUserType && profile?.user_type !== requiredUserType) {
     // Use useEffect to show toast only once after render
     useEffect(() => {
       toast({
@@ -36,9 +36,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserT
     }, []);
     
     // Redirect to appropriate page based on user type
-    if (user.userType === "buyer") {
+    if (profile?.user_type === "buyer") {
       return <Navigate to="/search" />;
-    } else if (user.userType === "seller") {
+    } else if (profile?.user_type === "seller") {
       return <Navigate to="/dashboard" />;
     } else {
       return <Navigate to="/" />;

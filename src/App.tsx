@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Auth from "./pages/Auth";
-import VerifyPhone from "./pages/VerifyPhone";
+// Removed VerifyPhone - using Auth.tsx instead
 import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
 import Inventory from "./pages/Inventory";
@@ -58,7 +58,7 @@ const App = () => (
               
               {/* Auth routes */}
               <Route path="/auth" element={<Auth />} />
-              <Route path="/verify-phone" element={<VerifyPhone />} />
+              {/* Removed /verify-phone route - using Auth.tsx instead */}
               
               {/* Buyer routes */}
               <Route 

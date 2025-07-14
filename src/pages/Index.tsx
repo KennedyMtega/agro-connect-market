@@ -15,7 +15,7 @@ import {
 import Layout from "@/components/layout/Layout";
 
 const HeroSection = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   return (
     <section className="relative py-20 overflow-hidden bg-gradient-to-b from-green-900 to-green-700 text-white">
@@ -43,7 +43,7 @@ const HeroSection = () => {
                     </Button>
                   </Link>
                 </>
-              ) : user.userType === "buyer" ? (
+              ) : profile?.user_type === "buyer" ? (
                 <Link to="/search">
                   <Button size="lg" className="bg-white text-green-800 hover:bg-gray-100">
                     Browse Crops
@@ -298,7 +298,7 @@ const TestimonialsSection = () => {
 };
 
 const CTASection = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   
   return (
     <section className="py-20 bg-primary text-primary-foreground">
@@ -321,7 +321,7 @@ const CTASection = () => {
               </Button>
             </Link>
           </div>
-        ) : user.userType === "buyer" ? (
+        ) : profile?.user_type === "buyer" ? (
           <Link to="/search">
             <Button size="lg" className="bg-white text-primary hover:bg-gray-100">
               Start Shopping

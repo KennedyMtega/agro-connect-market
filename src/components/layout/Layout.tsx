@@ -12,13 +12,13 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, hideFooter = false }: LayoutProps) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
   
   // Show welcome toast when user first logs in
   useEffect(() => {
     if (user && location.pathname === "/search" && sessionStorage.getItem('firstLogin') !== 'shown') {
-      const welcomeMessage = `Welcome, ${user.fullName}! Start searching for fresh crops near you.`;
+      const welcomeMessage = `Welcome, ${profile?.full_name}! Start searching for fresh crops near you.`;
         
       toast({
         title: "Logged In Successfully",
