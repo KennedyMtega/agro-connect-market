@@ -30,17 +30,18 @@ const OnBoarding = () => {
     if (currentPage < onboardingPages.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
-      navigate("/login");
+      // Mark that user has seen onboarding
+      localStorage.setItem('hasSeenOnboarding', 'true');
+      navigate("/auth");
     }
   };
 
-  const goToLogin = () => {
-    navigate("/login");
+  const goToAuth = () => {
+    // Mark that user has seen onboarding
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    navigate("/auth");
   };
 
-  const goToRegister = () => {
-    navigate("/register");
-  };
   
   return (
     <div className="min-h-screen flex flex-col bg-green-50">
@@ -49,7 +50,7 @@ const OnBoarding = () => {
         <Button 
           variant="ghost" 
           className="text-green-700" 
-          onClick={goToLogin}
+          onClick={goToAuth}
         >
           Skip
         </Button>
@@ -90,16 +91,9 @@ const OnBoarding = () => {
             <Button 
               className="w-full bg-green-600 hover:bg-green-700" 
               size="lg"
-              onClick={goToLogin}
+              onClick={goToAuth}
             >
-              Login
-            </Button>
-            <Button 
-              className="w-full bg-white text-green-600 border border-green-600 hover:bg-green-50" 
-              size="lg"
-              onClick={goToRegister}
-            >
-              Sign Up
+              Get Started
             </Button>
           </div>
         ) : (

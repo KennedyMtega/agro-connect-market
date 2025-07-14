@@ -99,7 +99,7 @@ export default function Auth() {
         description: "You have successfully signed in.",
       });
 
-      navigate('/');
+      // Will be redirected by RedirectToAuth component
     } catch (error) {
       console.error('Sign in error:', error);
       toast({
@@ -202,7 +202,7 @@ export default function Auth() {
         description: "Welcome to Boltish Agro! Your account has been created successfully.",
       });
 
-      navigate('/');
+      // Will be redirected by RedirectToAuth component
     } catch (error) {
       console.error('Sign up error:', error);
       toast({

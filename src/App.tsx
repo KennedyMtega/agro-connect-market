@@ -29,13 +29,25 @@ const RedirectToAuth = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // If user is not logged in, show auth
+  // If user is not logged in, redirect to onboarding first, then auth
   if (!user) {
+    // Check if user has seen onboarding
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      return <Navigate to="/onboarding" />;
+    }
     return <Navigate to="/auth" />;
   }
   
   // If user is logged in, redirect based on type
-  return profile?.user_type === "buyer" ? <Navigate to="/search" /> : <Navigate to="/dashboard" />;
+  if (profile?.user_type === "buyer") {
+    return <Navigate to="/search" />;
+  } else if (profile?.user_type === "seller") {
+    return <Navigate to="/dashboard" />;
+  } else {
+    // Fallback if user type is not set
+    return <Navigate to="/auth" />;
+  }
 };
 
 // Create a new instance of QueryClient
