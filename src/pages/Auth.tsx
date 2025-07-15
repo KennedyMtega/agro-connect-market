@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
 import { useToast } from '@/hooks/use-toast';
 import { validateTzPhone, formatTzPhone, getTzPhoneError } from '@/utils/phoneValidation';
 import { UserType } from '@/types/database';
@@ -319,22 +319,6 @@ export default function Auth() {
                       onChange={(e) => setSignUpData(prev => ({ ...prev, phone: e.target.value }))}
                       required
                     />
-                  </div>
-                  <div className="space-y-3">
-                    <Label>Account Type</Label>
-                     <RadioGroup
-                      value={signUpData.userType}
-                      onValueChange={(value: UserType) => setSignUpData(prev => ({ ...prev, userType: value }))}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="buyer" id="buyer" />
-                        <Label htmlFor="buyer">Buyer - I want to buy crops</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="seller" id="seller" />
-                        <Label htmlFor="seller">Seller - I want to sell crops</Label>
-                      </div>
-                    </RadioGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
