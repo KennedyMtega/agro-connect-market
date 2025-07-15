@@ -59,6 +59,9 @@ const SellerOnboarding = () => {
 
     setLoading(true);
     try {
+      // Get user's email from Supabase auth
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
@@ -68,6 +71,7 @@ const SellerOnboarding = () => {
           address: personalData.address,
           city: personalData.city,
           region: personalData.region,
+          email: user?.email, // Ensure email is stored
         })
         .eq('id', user?.id);
 
