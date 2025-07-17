@@ -204,18 +204,20 @@ export default function Auth() {
       }
 
       toast({
-        title: "Account Created!",
-        description: "Welcome to AgroConnect! Your account has been created successfully.",
+        title: "Account Created Successfully!",
+        description: "Welcome to AgroConnect! Your account has been created.",
       });
 
       // Clear stored user type
       localStorage.removeItem('selectedUserType');
       
-      // Redirect sellers to onboarding, buyers to search
+      // Route users based on their type
       if (signUpData.userType === 'seller') {
         navigate('/seller-onboarding');
+      } else {
+        // For buyers, navigate to search page
+        navigate('/search');
       }
-      // Buyers will be redirected by RedirectToAuth component
     } catch (error) {
       console.error('Sign up error:', error);
       toast({

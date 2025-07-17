@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Phone, Mail, Calendar, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import EmailNotification from "@/components/profile/EmailNotification";
 
 const Profile = () => {
   const { user, profile, sellerProfile, updateProfile } = useAuth();
@@ -86,6 +88,13 @@ const Profile = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
+          {/* Email Notification - Show at the top for buyers */}
+          {profile.user_type === "buyer" && (
+            <div className="md:col-span-3">
+              <EmailNotification />
+            </div>
+          )}
+
           {/* Profile Summary */}
           <Card className="md:col-span-1">
             <CardHeader className="text-center">
@@ -110,7 +119,11 @@ const Profile = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{user.email}</span>
+                <span className="text-sm">
+                  {user.email && !user.email.includes('@temp.local') 
+                    ? user.email 
+                    : "Email not added"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
