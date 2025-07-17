@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, MapPin, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatTZS } from "@/utils/currency";
 
 interface SellerCardProps {
   seller: any;
@@ -82,7 +83,7 @@ const SellerCard: React.FC<SellerCardProps> = ({ seller, selectedCropType }) => 
               <SelectContent>
                 {filteredCrops.map((crop: any) => (
                   <SelectItem key={crop.id} value={crop.id}>
-                    {crop.name} - ${crop.pricePerUnit}/{crop.unit}
+                    {crop.name} - {formatTZS(crop.pricePerUnit)}/{crop.unit}
                   </SelectItem>
                 ))}
               </SelectContent>

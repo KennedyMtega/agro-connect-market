@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, MessageCircle, Navigation, ShoppingCart, Star } from "lucide-react";
 import { Vendor } from '@/types/map';
+import { formatTZS, calculateDeliveryFee } from "@/utils/currency";
 
 interface VendorDetailProps {
   vendor: Vendor;
@@ -109,7 +110,7 @@ const VendorDetail: React.FC<VendorDetailProps> = ({
                 <option value="">Select a crop</option>
                 {vendor.crops.map((crop) => (
                   <option key={crop.id} value={crop.id}>
-                    {crop.name} - ${crop.pricePerUnit}/{crop.unit} ({crop.quantityAvailable} available)
+                    {crop.name} - {formatTZS(crop.pricePerUnit)}/{crop.unit} ({crop.quantityAvailable} available)
                   </option>
                 ))}
               </select>
@@ -153,23 +154,23 @@ const VendorDetail: React.FC<VendorDetailProps> = ({
                 <div className="flex justify-between text-sm">
                   <span>Price:</span>
                   <span>
-                    ${(
+                    {formatTZS(
                       (vendor.crops.find(c => c.id === selectedCrop)?.pricePerUnit || 0) * 
                       quantity
-                    ).toFixed(2)}
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Delivery Fee:</span>
-                  <span>$2.99</span>
+                  <span>{formatTZS(calculateDeliveryFee(vendor.distance))}</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium mt-2 pt-2 border-t">
                   <span>Total:</span>
                   <span>
-                    ${(
+                    {formatTZS(
                       (vendor.crops.find(c => c.id === selectedCrop)?.pricePerUnit || 0) * 
-                      quantity + 2.99
-                    ).toFixed(2)}
+                      quantity + calculateDeliveryFee(vendor.distance)
+                    )}
                   </span>
                 </div>
               </div>

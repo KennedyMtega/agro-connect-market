@@ -18,24 +18,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
+import { formatTZS } from "@/utils/currency";
+import { useNavigate } from "react-router-dom";
 
-// Mock data for seller dashboard
-const mockOrdersData = [
-  { id: "ord-001", buyer: "John Doe", crop: "Organic Rice", quantity: 25, unit: "kg", total: 899.75, status: "pending", time: "10:15 AM" },
-  { id: "ord-002", buyer: "Sarah Lee", crop: "Fresh Tomatoes", quantity: 15, unit: "kg", total: 44.85, status: "confirmed", time: "9:30 AM" },
-  { id: "ord-003", buyer: "Mike Wilson", crop: "Sweet Corn", quantity: 50, unit: "ear", total: 37.50, status: "in_transit", time: "Yesterday" },
-  { id: "ord-004", buyer: "Emily Chen", crop: "Russet Potatoes", quantity: 30, unit: "kg", total: 37.50, status: "delivered", time: "Yesterday" },
-];
-
-const mockInventoryData = [
-  { id: "crop-1", name: "Organic Rice", quantity: 500, unit: "kg", price: 35.99, status: "in_stock" },
-  { id: "crop-2", name: "Fresh Tomatoes", quantity: 100, unit: "kg", price: 2.99, status: "low_stock" },
-  { id: "crop-3", name: "Sweet Corn", quantity: 200, unit: "ear", price: 0.75, status: "in_stock" },
-  { id: "crop-4", name: "Russet Potatoes", quantity: 30, unit: "kg", price: 1.25, status: "low_stock" },
-];
+// Real data will be loaded from database
+const mockOrdersData: any[] = [];
+const mockInventoryData: any[] = [];
 
 const SellerDashboard = () => {
   const { user, profile, sellerProfile } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
@@ -48,7 +40,12 @@ const SellerDashboard = () => {
               Welcome back, {profile?.full_name || "Seller"}! Here's what's happening today.
             </p>
           </div>
-          <Button>+ Add New Crop</Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/seller-business-setup')}>
+              Edit Business Info
+            </Button>
+            <Button>+ Add New Crop</Button>
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
@@ -69,7 +66,7 @@ const SellerDashboard = () => {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$4,231.89</div>
+                  <div className="text-2xl font-bold">{formatTZS(8463780)}</div>
                   <p className="text-xs text-muted-foreground">
                     +20.1% from last month
                   </p>

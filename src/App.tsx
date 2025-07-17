@@ -19,6 +19,7 @@ import OrderTracking from "./pages/OrderTracking";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
+import SellerBusinessSetup from "./pages/SellerBusinessSetup";
 import OnBoarding from "./pages/OnBoarding";
 import RoleSelection from "./pages/RoleSelection";
 import SellerOnboarding from "./pages/SellerOnboarding";
@@ -122,14 +123,22 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/seller-orders" 
-                element={
-                  <ProtectedRoute requiredUserType="seller">
-                    <SellerOrders />
-                  </ProtectedRoute>
-                } 
-              />
+            <Route
+              path="/seller-orders"
+              element={
+                <ProtectedRoute requiredUserType="seller">
+                  <SellerOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/seller-business-setup"
+              element={
+                <ProtectedRoute requiredUserType="seller">
+                  <SellerBusinessSetup />
+                </ProtectedRoute>
+              }
+            />
               
               {/* Shared routes */}
               <Route 

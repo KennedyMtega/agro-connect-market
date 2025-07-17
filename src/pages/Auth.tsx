@@ -213,7 +213,7 @@ export default function Auth() {
       
       // Route users based on their type
       if (signUpData.userType === 'seller') {
-        navigate('/seller-onboarding');
+        navigate('/seller-business-setup');
       } else {
         // For buyers, navigate to search page
         navigate('/search');

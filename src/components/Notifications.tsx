@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { formatTZS } from "@/utils/currency";
 
 // Mock notifications data
 const mockNotifications = [
@@ -23,7 +24,7 @@ const mockNotifications = [
   {
     id: "notif-2",
     title: "Payment Received",
-    message: "Payment of $28.50 received for order #ord-456",
+    message: `Payment of ${formatTZS(57000)} received for order #ord-456`,
     time: "2 hours ago",
     isRead: false,
     type: "payment",
@@ -39,7 +40,7 @@ const mockNotifications = [
   {
     id: "notif-4",
     title: "Price Update",
-    message: "Price of Sweet Corn has been updated to $0.85/ear",
+    message: `Price of Sweet Corn has been updated to ${formatTZS(1700)}/ear`,
     time: "2 days ago",
     isRead: true,
     type: "price",
