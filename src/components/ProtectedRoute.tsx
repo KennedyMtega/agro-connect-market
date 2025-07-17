@@ -14,6 +14,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserT
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Use useEffect at top level to avoid conditional hooks
+  useEffect(() => {
+    if (requiredUserType && profile?.user_type !== requiredUserType && !isLoading && user) {
+      toast({
+        title: "Access Restricted",
+        description: `This area is only accessible to ${requiredUserType}s.`,
+        variant: "destructive",
+      });
+    }
+  }, [requiredUserType, profile?.user_type, isLoading, user, toast]);
+
   // Show loading or placeholder while checking authentication
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -26,15 +37,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserT
 
   // If a specific user type is required, check that condition
   if (requiredUserType && profile?.user_type !== requiredUserType) {
-    // Use useEffect to show toast only once after render
-    useEffect(() => {
-      toast({
-        title: "Access Restricted",
-        description: `This area is only accessible to ${requiredUserType}s.`,
-        variant: "destructive",
-      });
-    }, []);
-    
     // Redirect to appropriate page based on user type
     if (profile?.user_type === "buyer") {
       return <Navigate to="/search" />;
