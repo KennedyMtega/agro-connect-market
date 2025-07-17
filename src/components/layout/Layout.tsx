@@ -4,7 +4,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,6 +14,7 @@ interface LayoutProps {
 const Layout = ({ children, hideFooter = false }: LayoutProps) => {
   const { user, profile } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
   
   // Show welcome toast when user first logs in
   useEffect(() => {
@@ -27,7 +28,7 @@ const Layout = ({ children, hideFooter = false }: LayoutProps) => {
       
       sessionStorage.setItem('firstLogin', 'shown');
     }
-  }, [user, location.pathname]);
+  }, [user, location.pathname, profile?.full_name, toast]);
 
   return (
     <div className="flex flex-col min-h-screen bg-green-50">
