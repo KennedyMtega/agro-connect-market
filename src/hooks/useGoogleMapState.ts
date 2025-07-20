@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
-import { Vendor } from '@/types/map';
-import { useMapVendors } from './useMapVendors';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
+import { useMapVendors } from './useMapVendors';
+import { useSellers } from './useSellers';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants/googleMaps';
+import { Vendor } from '@/types/map';
 
 export const useGoogleMapState = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -11,21 +12,67 @@ export const useGoogleMapState = () => {
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [detailedVendor, setDetailedVendor] = useState<Vendor | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const { vendors, setVendors, mockVendors } = useMapVendors();
+  const { vendors, setVendors } = useMapVendors();
+  const { sellers: realSellers, loading: sellersLoading } = useSellers();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Load real sellers when available
+    if (realSellers.length > 0) {
+      setVendors(realSellers.map(seller => ({
+        id: seller.id,
+        name: seller.business_name,
+        location: seller.profile ? {
+          lat: seller.profile.location_lat || -6.8235,
+          lng: seller.profile.location_lng || 39.2790
+        } : { lat: -6.8235, lng: 39.2790 },
+        distance: seller.distance || 1,
+        rating: seller.average_rating || 4.5,
+        crops: seller.crops.map(crop => ({
+          id: crop.id,
+          name: crop.name,
+          category: crop.category?.name || "General",
+          pricePerUnit: crop.price_per_unit,
+          unit: crop.unit,
+          quantityAvailable: crop.quantity_available
+        })),
+        estimatedDelivery: seller.estimatedDelivery || "30-45 min",
+        online: seller.online || true
+      })));
+    }
+  }, [realSellers, setVendors]);
 
   const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
     console.log('Map loaded successfully in state hook');
-    
-    // Load all vendors immediately when map loads
-    setVendors(mockVendors);
-  }, [mockVendors, setVendors]);
+  }, []);
 
   const handleSearch = useCallback((query: string) => {
     if (!query.trim()) {
       setShowResults(false);
-      setVendors(mockVendors);
+      // Reset to all real sellers
+      if (realSellers.length > 0) {
+        setVendors(realSellers.map(seller => ({
+          id: seller.id,
+          name: seller.business_name,
+          location: seller.profile ? {
+            lat: seller.profile.location_lat || -6.8235,
+            lng: seller.profile.location_lng || 39.2790
+          } : { lat: -6.8235, lng: 39.2790 },
+          distance: seller.distance || 1,
+          rating: seller.average_rating || 4.5,
+          crops: seller.crops.map(crop => ({
+            id: crop.id,
+            name: crop.name,
+            category: crop.category?.name || "General",
+            pricePerUnit: crop.price_per_unit,
+            unit: crop.unit,
+            quantityAvailable: crop.quantity_available
+          })),
+          estimatedDelivery: seller.estimatedDelivery || "30-45 min",
+          online: seller.online || true
+        })));
+      }
       return;
     }
 
@@ -33,25 +80,26 @@ export const useGoogleMapState = () => {
     setIsSearching(true);
     setShowResults(true);
 
-    // Simulate search delay and filter vendors based on query
+    // Filter vendors based on query from real sellers
     setTimeout(() => {
-      const filteredVendors = mockVendors.filter(vendor => 
+      const filteredVendors = vendors.filter(vendor => 
         vendor.name.toLowerCase().includes(query.toLowerCase()) ||
         vendor.crops.some(crop => 
-          crop.name.toLowerCase().includes(query.toLowerCase()) ||
+          crop.name.toLowerCase().includes(query.toLowerCase()) || 
           crop.category.toLowerCase().includes(query.toLowerCase())
         )
       );
-      
+
       setVendors(filteredVendors);
+      setShowResults(true);
       setIsSearching(false);
       
       toast({
         title: "Search Complete",
-        description: `Found ${filteredVendors.length} vendors with "${query}"`,
+        description: `Found ${filteredVendors.length} sellers matching "${query}"`,
       });
     }, 800);
-  }, [mockVendors, setVendors, toast]);
+  }, [vendors, setVendors, toast, realSellers]);
 
   const handleVendorSelect = useCallback((vendor: Vendor) => {
     setSelectedVendor(vendor);

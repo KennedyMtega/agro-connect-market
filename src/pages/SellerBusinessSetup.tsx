@@ -63,8 +63,17 @@ const SellerBusinessSetup = () => {
           .update({
             business_name: businessData.businessName,
             business_description: businessData.businessDescription,
+            business_number: businessData.businessNumber,
             business_license: businessData.businessLicense,
             delivery_radius_km: businessData.deliveryRadius,
+            has_whatsapp: businessData.hasWhatsApp,
+            whatsapp_number: businessData.whatsAppNumber,
+            store_location: businessData.storeLocation,
+            store_location_lat: businessData.storeLocationLat,
+            store_location_lng: businessData.storeLocationLng,
+            owner_name: businessData.ownerName,
+            owner_phone: businessData.ownerPhone,
+            owner_email: businessData.ownerEmail,
           })
           .eq('user_id', user?.id);
 
@@ -77,8 +86,17 @@ const SellerBusinessSetup = () => {
             user_id: user?.id,
             business_name: businessData.businessName,
             business_description: businessData.businessDescription,
+            business_number: businessData.businessNumber,
             business_license: businessData.businessLicense,
             delivery_radius_km: businessData.deliveryRadius,
+            has_whatsapp: businessData.hasWhatsApp,
+            whatsapp_number: businessData.whatsAppNumber,
+            store_location: businessData.storeLocation,
+            store_location_lat: businessData.storeLocationLat,
+            store_location_lng: businessData.storeLocationLng,
+            owner_name: businessData.ownerName,
+            owner_phone: businessData.ownerPhone,
+            owner_email: businessData.ownerEmail,
           });
 
         if (error) throw error;

@@ -382,45 +382,72 @@ export type Database = {
           business_description: string | null
           business_license: string | null
           business_name: string
+          business_number: string | null
           created_at: string | null
           delivery_radius_km: number | null
+          has_whatsapp: boolean | null
           id: string
+          owner_email: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          store_location: string | null
+          store_location_lat: number | null
+          store_location_lng: number | null
           total_ratings: number | null
           updated_at: string | null
           user_id: string | null
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          whatsapp_number: string | null
         }
         Insert: {
           average_rating?: number | null
           business_description?: string | null
           business_license?: string | null
           business_name: string
+          business_number?: string | null
           created_at?: string | null
           delivery_radius_km?: number | null
+          has_whatsapp?: boolean | null
           id?: string
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          store_location?: string | null
+          store_location_lat?: number | null
+          store_location_lng?: number | null
           total_ratings?: number | null
           updated_at?: string | null
           user_id?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          whatsapp_number?: string | null
         }
         Update: {
           average_rating?: number | null
           business_description?: string | null
           business_license?: string | null
           business_name?: string
+          business_number?: string | null
           created_at?: string | null
           delivery_radius_km?: number | null
+          has_whatsapp?: boolean | null
           id?: string
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          store_location?: string | null
+          store_location_lat?: number | null
+          store_location_lng?: number | null
           total_ratings?: number | null
           updated_at?: string | null
           user_id?: string | null
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {
