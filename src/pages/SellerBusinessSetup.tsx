@@ -34,14 +34,20 @@ const SellerBusinessSetup = () => {
     ownerName: "",
     ownerPhone: "",
     ownerEmail: "",
+    ownerIdNumber: "",
+    brelaCertificate: "",
+    businessCertificate: "",
+    tinCertificate: "",
   });
 
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessData.businessName || !businessData.businessDescription || !businessData.businessNumber) {
+    if (!businessData.businessName || !businessData.businessDescription || !businessData.businessNumber || 
+        !businessData.ownerName || !businessData.ownerIdNumber || !businessData.brelaCertificate || 
+        !businessData.businessCertificate || !businessData.tinCertificate) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required business fields.",
+        description: "Please fill in all required fields including owner information and business documents.",
         variant: "destructive",
       });
       return;
@@ -74,6 +80,10 @@ const SellerBusinessSetup = () => {
             owner_name: businessData.ownerName,
             owner_phone: businessData.ownerPhone,
             owner_email: businessData.ownerEmail,
+            owner_id_number: businessData.ownerIdNumber,
+            brela_certificate: businessData.brelaCertificate,
+            business_certificate: businessData.businessCertificate,
+            tin_certificate: businessData.tinCertificate,
           })
           .eq('user_id', user?.id);
 
@@ -97,6 +107,10 @@ const SellerBusinessSetup = () => {
             owner_name: businessData.ownerName,
             owner_phone: businessData.ownerPhone,
             owner_email: businessData.ownerEmail,
+            owner_id_number: businessData.ownerIdNumber,
+            brela_certificate: businessData.brelaCertificate,
+            business_certificate: businessData.businessCertificate,
+            tin_certificate: businessData.tinCertificate,
           });
 
         if (error) throw error;
@@ -263,6 +277,17 @@ const SellerBusinessSetup = () => {
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="ownerIdNumber">Owner ID Number *</Label>
+                  <Input
+                    id="ownerIdNumber"
+                    value={businessData.ownerIdNumber}
+                    onChange={(e) => setBusinessData({...businessData, ownerIdNumber: e.target.value})}
+                    placeholder="Enter national ID number"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="ownerEmail">Owner Email</Label>
                   <Input
                     id="ownerEmail"
@@ -271,6 +296,46 @@ const SellerBusinessSetup = () => {
                     onChange={(e) => setBusinessData({...businessData, ownerEmail: e.target.value})}
                     placeholder="owner@example.com"
                   />
+                </div>
+              </div>
+
+              {/* Business Documents Section */}
+              <div className="space-y-4 p-4 border rounded-lg">
+                <h3 className="font-semibold">Business Documents</h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brelaCertificate">BRELA Certificate Number *</Label>
+                    <Input
+                      id="brelaCertificate"
+                      value={businessData.brelaCertificate}
+                      onChange={(e) => setBusinessData({...businessData, brelaCertificate: e.target.value})}
+                      placeholder="Enter BRELA certificate number"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="businessCertificate">Business Certificate Number *</Label>
+                    <Input
+                      id="businessCertificate"
+                      value={businessData.businessCertificate}
+                      onChange={(e) => setBusinessData({...businessData, businessCertificate: e.target.value})}
+                      placeholder="Enter business certificate number"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tinCertificate">TIN Certificate Number *</Label>
+                    <Input
+                      id="tinCertificate"
+                      value={businessData.tinCertificate}
+                      onChange={(e) => setBusinessData({...businessData, tinCertificate: e.target.value})}
+                      placeholder="Enter TIN certificate number"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               

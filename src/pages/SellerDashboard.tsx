@@ -21,9 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatTZS } from "@/utils/currency";
 import { useNavigate } from "react-router-dom";
 
-// Real data will be loaded from database
-const mockOrdersData: any[] = [];
-const mockInventoryData: any[] = [];
+// All data will be loaded from database - no mock data
 
 const SellerDashboard = () => {
   const { user, profile, sellerProfile } = useAuth();
@@ -66,9 +64,9 @@ const SellerDashboard = () => {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatTZS(8463780)}</div>
+                  <div className="text-2xl font-bold">{formatTZS(0)}</div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% from last month
+                    No sales yet
                   </p>
                 </CardContent>
               </Card>
@@ -81,9 +79,9 @@ const SellerDashboard = () => {
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">24</div>
+                  <div className="text-2xl font-bold">0</div>
                   <p className="text-xs text-muted-foreground">
-                    +12% from last month
+                    No orders yet
                   </p>
                 </CardContent>
               </Card>
@@ -96,9 +94,9 @@ const SellerDashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">15</div>
+                  <div className="text-2xl font-bold">0</div>
                   <p className="text-xs text-muted-foreground">
-                    +5 new this month
+                    No buyers yet
                   </p>
                 </CardContent>
               </Card>
@@ -111,9 +109,9 @@ const SellerDashboard = () => {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">4.9/5</div>
+                  <div className="text-2xl font-bold">{sellerProfile?.average_rating || 0}/5</div>
                   <p className="text-xs text-muted-foreground">
-                    Based on 27 reviews
+                    Based on {sellerProfile?.total_ratings || 0} reviews
                   </p>
                 </CardContent>
               </Card>
@@ -141,25 +139,11 @@ const SellerDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockOrdersData.slice(0, 3).map((order) => (
-                      <div key={order.id} className="flex items-center gap-4">
-                        <div className="rounded-full p-2 bg-primary/10">
-                          <Truck className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            {order.crop} - {order.quantity} {order.unit}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Ordered by {order.buyer}
-                          </p>
-                        </div>
-                        <div className="text-xs text-right">
-                          <p>${order.total.toFixed(2)}</p>
-                          <p className="text-muted-foreground">{order.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No recent orders yet</p>
+                      <p className="text-sm">Orders will appear here once customers start purchasing</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -175,23 +159,11 @@ const SellerDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockInventoryData.map((item) => (
-                      <div key={item.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{item.name}</p>
-                          <p className={`text-xs ${item.status === 'low_stock' ? 'text-amber-500' : 'text-green-500'}`}>
-                            {item.status === 'low_stock' ? 'Low Stock' : 'In Stock'}
-                          </p>
-                        </div>
-                        <Progress
-                          value={item.status === 'low_stock' ? 20 : 70}
-                          className={item.status === 'low_stock' ? 'bg-amber-100' : 'bg-green-100'}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          {item.quantity} {item.unit} available
-                        </p>
-                      </div>
-                    ))}
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No crops added yet</p>
+                      <p className="text-sm">Add crops to your inventory to start selling</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -229,44 +201,11 @@ const SellerDashboard = () => {
                     <div>Actions</div>
                   </div>
                   
-                  {mockOrdersData.map((order) => (
-                    <div 
-                      key={order.id}
-                      className="grid grid-cols-6 items-center p-3 text-sm border-t"
-                    >
-                      <div className="font-medium">{order.id}</div>
-                      <div>{order.buyer}</div>
-                      <div>{order.crop} ({order.quantity} {order.unit})</div>
-                      <div>${order.total.toFixed(2)}</div>
-                      <div>
-                        <span 
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                            ${order.status === 'pending' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : order.status === 'confirmed' 
-                              ? 'bg-blue-100 text-blue-800'
-                              : order.status === 'in_transit'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-green-100 text-green-800'
-                            }`}
-                        >
-                          {order.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline">
-                            View
-                          </Button>
-                          {order.status === 'pending' && (
-                            <Button size="sm">
-                              Accept
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-center py-8 text-muted-foreground border-t">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No orders yet</p>
+                    <p className="text-sm">Orders from customers will appear here</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -291,38 +230,11 @@ const SellerDashboard = () => {
                     <div>Actions</div>
                   </div>
                   
-                  {mockInventoryData.map((item) => (
-                    <div 
-                      key={item.id}
-                      className="grid grid-cols-6 items-center p-3 text-sm border-t"
-                    >
-                      <div className="font-medium">{item.name}</div>
-                      <div>{item.quantity} {item.unit}</div>
-                      <div>${item.price.toFixed(2)}/{item.unit}</div>
-                      <div>
-                        <span 
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                            ${item.status === 'low_stock' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-green-100 text-green-800'
-                            }`}
-                        >
-                          {item.status === 'low_stock' ? 'Low Stock' : 'In Stock'}
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground">2 days ago</div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Button size="sm" variant="outline">
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-destructive hover:text-destructive">
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-center py-8 text-muted-foreground border-t">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No crops in inventory</p>
+                    <p className="text-sm">Add crops to start managing your inventory</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -348,33 +260,10 @@ const SellerDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Organic Rice</p>
-                        <p className="text-sm">350 kg sold</p>
-                      </div>
-                      <Progress value={80} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Fresh Tomatoes</p>
-                        <p className="text-sm">120 kg sold</p>
-                      </div>
-                      <Progress value={65} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Sweet Corn</p>
-                        <p className="text-sm">180 ears sold</p>
-                      </div>
-                      <Progress value={50} />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">Russet Potatoes</p>
-                        <p className="text-sm">90 kg sold</p>
-                      </div>
-                      <Progress value={40} />
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No sales data available</p>
+                      <p className="text-sm">Sales analytics will appear once you start selling</p>
                     </div>
                   </div>
                 </CardContent>
