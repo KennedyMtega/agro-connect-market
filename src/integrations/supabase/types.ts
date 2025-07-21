@@ -379,6 +379,8 @@ export type Database = {
       seller_profiles: {
         Row: {
           average_rating: number | null
+          brela_certificate: string | null
+          business_certificate: string | null
           business_description: string | null
           business_license: string | null
           business_name: string
@@ -388,11 +390,13 @@ export type Database = {
           has_whatsapp: boolean | null
           id: string
           owner_email: string | null
+          owner_id_number: string | null
           owner_name: string | null
           owner_phone: string | null
           store_location: string | null
           store_location_lat: number | null
           store_location_lng: number | null
+          tin_certificate: string | null
           total_ratings: number | null
           updated_at: string | null
           user_id: string | null
@@ -403,6 +407,8 @@ export type Database = {
         }
         Insert: {
           average_rating?: number | null
+          brela_certificate?: string | null
+          business_certificate?: string | null
           business_description?: string | null
           business_license?: string | null
           business_name: string
@@ -412,11 +418,13 @@ export type Database = {
           has_whatsapp?: boolean | null
           id?: string
           owner_email?: string | null
+          owner_id_number?: string | null
           owner_name?: string | null
           owner_phone?: string | null
           store_location?: string | null
           store_location_lat?: number | null
           store_location_lng?: number | null
+          tin_certificate?: string | null
           total_ratings?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -427,6 +435,8 @@ export type Database = {
         }
         Update: {
           average_rating?: number | null
+          brela_certificate?: string | null
+          business_certificate?: string | null
           business_description?: string | null
           business_license?: string | null
           business_name?: string
@@ -436,11 +446,13 @@ export type Database = {
           has_whatsapp?: boolean | null
           id?: string
           owner_email?: string | null
+          owner_id_number?: string | null
           owner_name?: string | null
           owner_phone?: string | null
           store_location?: string | null
           store_location_lat?: number | null
           store_location_lng?: number | null
+          tin_certificate?: string | null
           total_ratings?: number | null
           updated_at?: string | null
           user_id?: string | null
