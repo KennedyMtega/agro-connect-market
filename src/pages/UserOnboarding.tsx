@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, User, Phone, Mail, ArrowRight, Leaf, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import EmailUpdate from "@/components/profile/EmailUpdate";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ const UserOnboarding = () => {
   const [signUpData, setSignUpData] = useState({
     fullName: "",
     phone: "",
+    email: "",
     password: "",
     confirmPassword: "",
   });
@@ -51,6 +53,11 @@ const UserOnboarding = () => {
       // Validation
       if (!signUpData.fullName.trim()) {
         toast.error("Please enter your full name.");
+        return;
+      }
+
+      if (!signUpData.email.trim() || !signUpData.email.includes('@')) {
+        toast.error("Please enter a valid email address.");
         return;
       }
 
@@ -84,13 +91,12 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Use email format: phone@temp.local for authentication
-      const email = `${formattedPhone.replace('+', '')}@temp.local`;
-      
+      // Use the real email provided by user
       const { error } = await supabase.auth.signUp({
-        email,
+        email: signUpData.email.trim(),
         password: signUpData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             phone_number: formattedPhone,
             full_name: signUpData.fullName,
@@ -127,28 +133,32 @@ const UserOnboarding = () => {
 
       const formattedPhone = formatTzPhone(signInData.phone);
       
-      // First, get the profile to verify it's a buyer
-      const { data: profile } = await supabase
+      // First, get the profile to verify it's a buyer and get email info
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, user_type')
+        .select('id, user_type, email')
         .eq('phone_number', formattedPhone)
         .maybeSingle();
 
-      if (!profile) {
+      if (!profileData) {
         toast.error("No account found with this phone number. Please sign up first.");
         return;
       }
 
-      if (profile.user_type !== 'buyer') {
+      if (profileData.user_type !== 'buyer') {
         toast.error("This phone number is registered for sellers. Please use the seller login.");
         return;
       }
 
-      // Use email format: phone@temp.local for authentication
-      const email = `${formattedPhone.replace('+', '')}@temp.local`;
+      // Try signing in with the user's actual email first, then fallback to temp email
+      let signInEmail = profileData.email;
+      if (!signInEmail || signInEmail.includes('@temp.local')) {
+        // Use temp email format for existing accounts
+        signInEmail = `${formattedPhone.replace('+', '')}@temp.local`;
+      }
       
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: signInEmail,
         password: signInData.password,
       });
 
@@ -233,59 +243,11 @@ const UserOnboarding = () => {
                 <p className="text-blue-600 text-sm">Your account is ready. You can start shopping immediately or add optional details below.</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="deliveryAddress" className="flex items-center text-sm font-medium">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Delivery Address (Optional)
-                </Label>
-                <Input
-                  id="deliveryAddress"
-                  placeholder="Street address for deliveries"
-                  value={formData.deliveryAddress}
-                  onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-                  className="border-blue-200 focus:border-blue-400"
-                />
-              </div>
+              {/* Email Update Section */}
+              <EmailUpdate onComplete={handleComplete} />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city" className="text-sm font-medium">
-                    City (Optional)
-                  </Label>
-                  <Input
-                    id="city"
-                    placeholder="Your city"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    className="border-blue-200 focus:border-blue-400"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="region" className="text-sm font-medium">
-                    Region (Optional)
-                  </Label>
-                  <Input
-                    id="region"
-                    placeholder="Your region"
-                    value={formData.region}
-                    onChange={(e) => handleInputChange('region', e.target.value)}
-                    className="border-blue-200 focus:border-blue-400"
-                  />
-                </div>
-              </div>
-
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                size="lg"
-                onClick={handleComplete}
-                disabled={isLoading}
-              >
-                {isLoading ? "Setting up..." : "Start Shopping"}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-
-              <div className="text-center text-sm text-gray-500">
-                You can add or update these details anytime in your profile
+              <div className="text-center text-sm text-gray-500 mt-4">
+                Location permissions will be requested when you start shopping
               </div>
             </CardContent>
           </Card>
@@ -360,43 +322,54 @@ const UserOnboarding = () => {
                       onChange={(e) => setSignUpData(prev => ({ ...prev, phone: e.target.value }))}
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="At least 6 characters"
-                        value={signUpData.password}
-                        onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                    <Input
-                      id="signup-confirm-password"
-                      type="password"
-                      placeholder="Re-enter your password"
-                      value={signUpData.confirmPassword}
-                      onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
-                    {isLoading ? "Creating Account..." : "Create Buyer Account"}
-                  </Button>
+                   </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="signup-email">Email Address</Label>
+                     <Input
+                       id="signup-email"
+                       type="email"
+                       placeholder="your@email.com"
+                       value={signUpData.email}
+                       onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
+                       required
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="signup-password">Password</Label>
+                     <div className="relative">
+                       <Input
+                         id="signup-password"
+                         type={showPassword ? "text" : "password"}
+                         placeholder="At least 6 characters"
+                         value={signUpData.password}
+                         onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
+                         required
+                       />
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                         onClick={() => setShowPassword(!showPassword)}
+                       >
+                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                       </Button>
+                     </div>
+                   </div>
+                   <div className="space-y-2">
+                     <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                     <Input
+                       id="signup-confirm-password"
+                       type="password"
+                       placeholder="Re-enter your password"
+                       value={signUpData.confirmPassword}
+                       onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                       required
+                     />
+                   </div>
+                   <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+                     {isLoading ? "Creating Account..." : "Create Buyer Account"}
+                   </Button>
                 </form>
               </TabsContent>
 
