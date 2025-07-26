@@ -66,27 +66,7 @@ export const useMapVendors = () => {
 
   useEffect(() => {
     fetchVerifiedSellers();
-    
-    // Real-time subscription for vendor updates - but don't auto-refetch during search
-    const channel = supabase
-      .channel('map-vendors-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'crops'
-        },
-        (payload) => {
-          console.log('Crop inventory updated, but not auto-refreshing during search');
-          // Don't automatically refetch during search - let user manually refresh if needed
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Removed real-time subscription to prevent interference with search results
   }, []);
 
   return {

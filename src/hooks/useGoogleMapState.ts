@@ -19,8 +19,9 @@ export const useGoogleMapState = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load real sellers when available
-    if (realSellers.length > 0) {
+    // Load real sellers when available - but only if no search is active
+    if (realSellers.length > 0 && !searchQuery) {
+      console.log('Loading default sellers because no search is active');
       setVendors(realSellers.map(seller => ({
         id: seller.id,
         name: seller.business_name,
@@ -42,7 +43,7 @@ export const useGoogleMapState = () => {
         online: seller.online || true
       })));
     }
-  }, [realSellers, setVendors]);
+  }, [realSellers, setVendors, searchQuery]);
 
   const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
