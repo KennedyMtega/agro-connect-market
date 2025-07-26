@@ -111,10 +111,18 @@ export const useGoogleMapState = () => {
       setVendors(searchVendors);
       setShowResults(true);
       
-      toast({
-        title: "Global Search Complete",
-        description: `Found ${searchVendors.length} sellers with "${query}" across all locations`,
-      });
+      if (searchVendors.length > 0) {
+        toast({
+          title: "Search Complete",
+          description: `Found ${searchVendors.length} sellers with "${query}"`,
+        });
+      } else {
+        toast({
+          title: "No Results",
+          description: `No sellers found for "${query}". Try different keywords.`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Search error:', error);
       toast({

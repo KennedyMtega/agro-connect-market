@@ -58,7 +58,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, inputRef }) => {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for crops..."
+          placeholder="Search for crops, businesses..."
           className="flex-1 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-2 pr-4 py-6"
           onFocus={() => setIsFocused(true)}
         />

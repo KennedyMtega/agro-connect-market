@@ -15,8 +15,36 @@ export const useGlobalCropSearch = () => {
     try {
       setIsSearching(true);
 
-      // Search for sellers that have crops matching the query
-      const { data: sellersData, error: sellersError } = await supabase
+      // First search for sellers by business name/description
+      const { data: businessMatches, error: businessError } = await supabase
+        .from('seller_profiles')
+        .select(`
+          *,
+          profiles!seller_profiles_user_id_fkey (
+            full_name,
+            city
+          ),
+          crops (
+            id,
+            name,
+            description,
+            price_per_unit,
+            unit,
+            quantity_available,
+            is_organic,
+            is_active,
+            crop_categories (
+              name
+            )
+          )
+        `)
+        .eq('verification_status', 'verified')
+        .or(`business_name.ilike.%${query}%,business_description.ilike.%${query}%`)
+        .not('store_location_lat', 'is', null)
+        .not('store_location_lng', 'is', null);
+
+      // Then search for sellers that have crops matching the query
+      const { data: cropMatches, error: cropError } = await supabase
         .from('seller_profiles')
         .select(`
           *,
@@ -40,16 +68,21 @@ export const useGlobalCropSearch = () => {
         `)
         .eq('verification_status', 'verified')
         .eq('crops.is_active', true)
-        .or(`crops.name.ilike.%${query}%,crops.description.ilike.%${query}%,crops.crop_categories.name.ilike.%${query}%`)
+        .or(`crops.name.ilike.%${query}%,crops.description.ilike.%${query}%`)
         .not('store_location_lat', 'is', null)
         .not('store_location_lng', 'is', null);
 
-      if (sellersError) {
-        throw sellersError;
-      }
+      if (businessError) throw businessError;
+      if (cropError) throw cropError;
+
+      // Combine and deduplicate results
+      const combinedResults = [...(businessMatches || []), ...(cropMatches || [])];
+      const uniqueResults = combinedResults.filter((seller, index, self) => 
+        index === self.findIndex(s => s.id === seller.id)
+      );
 
       // Transform the data to match our interface
-      const transformedSellers: Seller[] = (sellersData || []).map(seller => ({
+      const transformedSellers: Seller[] = (uniqueResults || []).map(seller => ({
         id: seller.id,
         business_name: seller.business_name,
         business_description: seller.business_description || '',
@@ -58,7 +91,7 @@ export const useGlobalCropSearch = () => {
         verification_status: seller.verification_status || 'pending',
         user_id: seller.user_id,
         crops: (seller.crops || [])
-          .filter((crop: any) => crop.is_active)
+          .filter((crop: any) => crop.is_active && crop.quantity_available > 0)
           .map((crop: any) => ({
             id: crop.id,
             name: crop.name,
@@ -80,6 +113,7 @@ export const useGlobalCropSearch = () => {
         online: Math.random() > 0.3,
       }));
 
+      console.log(`Search for "${query}" found ${transformedSellers.length} sellers`);
       return transformedSellers;
     } catch (error: any) {
       console.error('Error searching crops:', error);
