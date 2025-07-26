@@ -30,9 +30,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserT
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  // If user is not logged in, redirect to login
+  // If user is not logged in, redirect to landing page
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   // If a specific user type is required, check that condition

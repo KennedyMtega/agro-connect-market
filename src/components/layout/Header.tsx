@@ -38,7 +38,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -65,13 +65,13 @@ const Header = () => {
                 <div className="flex flex-col gap-2 mt-4">
                   {!user ? (
                     <>
-                      <Link to="/login">
+                      <Link to="/user-onboarding">
                         <Button className="w-full" variant="outline">
-                          Log in
+                          Join as Buyer
                         </Button>
                       </Link>
-                      <Link to="/register">
-                        <Button className="w-full">Sign up</Button>
+                      <Link to="/seller-onboarding">
+                        <Button className="w-full">Join as Seller</Button>
                       </Link>
                     </>
                   ) : isBuyer ? (
@@ -182,11 +182,11 @@ const Header = () => {
         <div className="flex items-center gap-4">
           {!user ? (
             <div className="hidden md:flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="outline">Log in</Button>
+              <Link to="/user-onboarding">
+                <Button variant="outline">Join as Buyer</Button>
               </Link>
-              <Link to="/register">
-                <Button>Sign up</Button>
+              <Link to="/seller-onboarding">
+                <Button>Join as Seller</Button>
               </Link>
             </div>
           ) : (

@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Landing from "./pages/Landing";
-import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
 import Inventory from "./pages/Inventory";
@@ -22,6 +21,7 @@ import SellerOrders from "./pages/SellerOrders";
 import SellerBusinessSetup from "./pages/SellerBusinessSetup";
 import UserOnboarding from "./pages/UserOnboarding";
 import SellerOnboarding from "./pages/SellerOnboarding";
+import ProtectedOnboarding from "./components/ProtectedOnboarding";
 
 // Redirect component for authenticated users
 const AuthenticatedRedirect = () => {
@@ -51,8 +51,8 @@ const AuthenticatedRedirect = () => {
   } else if (profile?.user_type === "seller") {
     return <Navigate to="/dashboard" />;
   } else {
-    // Fallback if user type is not set
-    return <Navigate to="/auth" />;
+    // Fallback if user type is not set - redirect to landing
+    return <Landing />;
   }
 };
 
@@ -73,11 +73,22 @@ const App = () => (
               
               
               {/* Onboarding */}
-              <Route path="/user-onboarding" element={<UserOnboarding />} />
-              <Route path="/seller-onboarding" element={<SellerOnboarding />} />
-              
-              {/* Auth routes */}
-              <Route path="/auth" element={<Auth />} />
+              <Route 
+                path="/user-onboarding" 
+                element={
+                  <ProtectedOnboarding userType="buyer">
+                    <UserOnboarding />
+                  </ProtectedOnboarding>
+                } 
+              />
+              <Route 
+                path="/seller-onboarding" 
+                element={
+                  <ProtectedOnboarding userType="seller">
+                    <SellerOnboarding />
+                  </ProtectedOnboarding>
+                } 
+              />
               
               {/* User routes */}
               <Route 
