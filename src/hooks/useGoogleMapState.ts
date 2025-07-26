@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { useMapVendors } from './useMapVendors';
-import { useGlobalCropSearch } from './useGlobalCropSearch';
+import { useSellers } from './useSellers';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants/googleMaps';
 import { Vendor } from '@/types/map';
 
@@ -13,57 +13,66 @@ export const useGoogleMapState = () => {
   const [detailedVendor, setDetailedVendor] = useState<Vendor | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { vendors, setVendors } = useMapVendors();
-  const { searchResults, searchCrops, loading: searchLoading } = useGlobalCropSearch();
+  const { sellers: realSellers, loading: sellersLoading } = useSellers();
   const { toast } = useToast();
 
-  // Convert search results to vendors for map display
   useEffect(() => {
-    if (searchResults.crops.length > 0) {
-      // Group crops by seller
-      const sellerMap = new Map();
-      
-      searchResults.crops.forEach(crop => {
-        const sellerId = crop.seller.id;
-        if (!sellerMap.has(sellerId)) {
-          sellerMap.set(sellerId, {
-            id: sellerId,
-            name: crop.seller.business_name,
-            location: {
-              lat: crop.location_lat,
-              lng: crop.location_lng
-            },
-            distance: 1, // Default distance since we're searching globally
-            rating: crop.seller.average_rating,
-            crops: [],
-            estimatedDelivery: "30-45 min",
-            online: true
-          });
-        }
-        
-        const vendor = sellerMap.get(sellerId);
-        vendor.crops.push({
+    // Load real sellers when available
+    if (realSellers.length > 0) {
+      setVendors(realSellers.map(seller => ({
+        id: seller.id,
+        name: seller.business_name,
+        location: seller.profile ? {
+          lat: seller.profile.location_lat || -6.8235,
+          lng: seller.profile.location_lng || 39.2790
+        } : { lat: -6.8235, lng: 39.2790 },
+        distance: seller.distance || 1,
+        rating: seller.average_rating || 4.5,
+        crops: seller.crops.map(crop => ({
           id: crop.id,
           name: crop.name,
           category: crop.category?.name || "General",
           pricePerUnit: crop.price_per_unit,
           unit: crop.unit,
           quantityAvailable: crop.quantity_available
-        });
-      });
-      
-      setVendors(Array.from(sellerMap.values()));
+        })),
+        estimatedDelivery: seller.estimatedDelivery || "30-45 min",
+        online: seller.online || true
+      })));
     }
-  }, [searchResults, setVendors]);
+  }, [realSellers, setVendors]);
 
   const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
     console.log('Map loaded successfully in state hook');
   }, []);
 
-  const handleSearch = useCallback(async (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     if (!query.trim()) {
       setShowResults(false);
-      setVendors([]);
+      // Reset to all real sellers
+      if (realSellers.length > 0) {
+        setVendors(realSellers.map(seller => ({
+          id: seller.id,
+          name: seller.business_name,
+          location: seller.profile ? {
+            lat: seller.profile.location_lat || -6.8235,
+            lng: seller.profile.location_lng || 39.2790
+          } : { lat: -6.8235, lng: 39.2790 },
+          distance: seller.distance || 1,
+          rating: seller.average_rating || 4.5,
+          crops: seller.crops.map(crop => ({
+            id: crop.id,
+            name: crop.name,
+            category: crop.category?.name || "General",
+            pricePerUnit: crop.price_per_unit,
+            unit: crop.unit,
+            quantityAvailable: crop.quantity_available
+          })),
+          estimatedDelivery: seller.estimatedDelivery || "30-45 min",
+          online: seller.online || true
+        })));
+      }
       return;
     }
 
@@ -71,10 +80,26 @@ export const useGoogleMapState = () => {
     setIsSearching(true);
     setShowResults(true);
 
-    // Use the global crop search
-    await searchCrops(query);
-    setIsSearching(false);
-  }, [searchCrops]);
+    // Filter vendors based on query from real sellers
+    setTimeout(() => {
+      const filteredVendors = vendors.filter(vendor => 
+        vendor.name.toLowerCase().includes(query.toLowerCase()) ||
+        vendor.crops.some(crop => 
+          crop.name.toLowerCase().includes(query.toLowerCase()) || 
+          crop.category.toLowerCase().includes(query.toLowerCase())
+        )
+      );
+
+      setVendors(filteredVendors);
+      setShowResults(true);
+      setIsSearching(false);
+      
+      toast({
+        title: "Search Complete",
+        description: `Found ${filteredVendors.length} sellers matching "${query}"`,
+      });
+    }, 800);
+  }, [vendors, setVendors, toast, realSellers]);
 
   const handleVendorSelect = useCallback((vendor: Vendor) => {
     setSelectedVendor(vendor);
