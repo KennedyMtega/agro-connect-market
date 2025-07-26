@@ -4,6 +4,8 @@ import { Order, OrderItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { CartItem } from './useCartStore';
 import { Location } from './useDeliveryLocation';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const ORDERS_STORAGE_KEY = 'eko-orders';
 
@@ -14,102 +16,102 @@ export const useOrderManagement = (
   deliveryLocation: Location | null,
   setDeliveryLocation: (location: Location | null) => void,
 ) => {
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const storedOrders = window.localStorage.getItem(ORDERS_STORAGE_KEY);
-      if (storedOrders) {
-          const parsedOrders = JSON.parse(storedOrders);
-          // Make sure dates are parsed correctly
-          return parsedOrders.map((o: Order) => ({
-              ...o,
-              createdAt: new Date(o.createdAt),
-              estimatedDelivery: o.estimatedDelivery ? new Date(o.estimatedDelivery) : undefined,
-              tracking: o.tracking ? {
-                  ...o.tracking,
-                  lastUpdate: new Date(o.tracking.lastUpdate),
-                  timeline: o.tracking.timeline.map(t => ({...t, time: new Date(t.time)}))
-              } : undefined
-          }));
-      }
-      return [];
-    } catch (error) {
-      console.error("Error reading orders from localStorage", error);
-      return [];
-    }
-  });
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const fetchUserOrders = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(
+            *,
+            crops(name, unit)
+          ),
+          seller_profiles(business_name)
+        `)
+        .eq('buyer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Transform database orders to our Order type
+      const transformedOrders: Order[] = (data || []).map(order => ({
+        id: order.id,
+        buyerId: order.buyer_id,
+        sellerId: order.seller_id,
+        sellerName: order.seller_profiles?.business_name || 'Unknown Seller',
+        items: (order.order_items || []).map((item: any) => ({
+          id: item.id,
+          cropId: item.crop_id,
+          cropName: item.crops?.name || 'Unknown Crop',
+          quantity: item.quantity,
+          unit: item.crops?.unit || 'kg',
+          pricePerUnit: item.price_per_unit,
+          totalPrice: item.total_price,
+        })),
+        status: order.status,
+        totalAmount: order.total_amount,
+        deliveryFee: order.delivery_fee,
+        deliveryAddress: {
+          address: order.delivery_address,
+          coordinates: {
+            latitude: order.delivery_lat,
+            longitude: order.delivery_lng,
+          },
+        },
+        createdAt: new Date(order.created_at),
+        estimatedDelivery: order.estimated_delivery ? new Date(order.estimated_delivery) : undefined,
+        tracking: {
+          currentStatus: order.status,
+          lastUpdate: new Date(order.updated_at),
+          timeline: [
+            { status: 'Order Placed', time: new Date(order.created_at), completed: true, current: order.status === 'pending' },
+            { status: 'Confirmed', time: new Date(order.updated_at), completed: order.status !== 'pending', current: order.status === 'confirmed' },
+            { status: 'In Transit', time: new Date(order.updated_at), completed: ['in_transit', 'delivered'].includes(order.status), current: order.status === 'in_transit' },
+            { status: 'Delivered', time: new Date(order.updated_at), completed: order.status === 'delivered', current: order.status === 'delivered' },
+          ],
+        },
+      }));
+      
+      setOrders(transformedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load orders. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-    } catch (error) {
-      console.error("Error writing orders to localStorage", error);
-    }
-  }, [orders]);
+    fetchUserOrders();
+  }, [user]);
 
   const getOrderById = (orderId: string) => {
     return orders.find((order) => order.id === orderId);
   };
 
-  // Order simulation logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOrders(currentOrders =>
-        currentOrders.map(order => {
-          if (order.status === 'delivered' || order.status === 'cancelled') {
-            return order;
-          }
+  const proceedToCheckout = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to place an order.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-          const now = new Date();
-          const lastUpdate = new Date(order.tracking?.lastUpdate || order.createdAt).getTime();
-          const minutesSinceUpdate = (now.getTime() - lastUpdate) / (1000 * 60);
-
-          let newStatus: Order['status'] = order.status;
-          let newTracking = { ...(order.tracking!) };
-
-          if (order.status === 'pending' && minutesSinceUpdate > 0.25) { // 15 seconds
-            newStatus = 'in_transit';
-            const timeline = order.tracking!.timeline.map(t => ({...t, current: false}));
-            timeline.push({ status: 'On The Way', time: new Date(), completed: true, current: true });
-            newTracking = {
-              currentStatus: 'On The Way',
-              lastUpdate: new Date(),
-              driver: {
-                id: 'driver-1',
-                name: 'Juma Khamis',
-                phone: '+255 784 123 456',
-                avatar: undefined,
-                vehicle: { make: 'Toyota', model: 'Hilux', color: 'White', plate: 'T123 ABC' }
-              },
-              currentLocation: { coordinates: { latitude: -6.7924, longitude: 39.2083 }, address: '2.5km away' },
-              timeline,
-            };
-          } else if (order.status === 'in_transit' && minutesSinceUpdate > 0.5) { // 30 seconds after last update
-            newStatus = 'delivered';
-            const timeline = order.tracking!.timeline.map(t => ({...t, current: false}));
-            timeline.push({ status: 'Delivered', time: new Date(), completed: true, current: true });
-            newTracking = {
-              ...newTracking,
-              currentStatus: 'Delivered',
-              lastUpdate: new Date(),
-              timeline,
-            };
-          }
-
-          if (newStatus !== order.status) {
-            return { ...order, status: newStatus, tracking: newTracking };
-          }
-
-          return order;
-        })
-      );
-    }, 15000); // Check every 15 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const proceedToCheckout = () => {
     if (!deliveryLocation) {
       toast({
         title: "Missing Delivery Location",
@@ -118,56 +120,84 @@ export const useOrderManagement = (
       });
       return;
     }
+
+    if (items.length === 0) {
+      toast({
+        title: "Empty Cart",
+        description: "Please add items to your cart before checkout.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsCheckingOut(true);
     
-    setTimeout(() => {
-      const sellerNames = [...new Set(items.map(item => item.crop.sellerName || 'Unknown Seller'))];
+    try {
+      // Get the seller ID from the first item (assuming all items are from same seller)
+      const firstItem = items[0];
+      if (!firstItem?.crop.sellerId) {
+        throw new Error('Seller information not found');
+      }
 
-      const newOrderItems: OrderItem[] = items.map(item => ({
-        id: item.crop.id,
-        cropId: item.crop.id,
-        cropName: item.crop.name,
-        quantity: item.quantity,
-        unit: item.unit,
-        pricePerUnit: item.crop.pricePerUnit,
-        totalPrice: item.crop.pricePerUnit * item.quantity,
-      }));
-
-      const newOrder: Order = {
-        id: `ORD-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
-        buyerId: 'user-123', // Mock buyer ID
-        sellerId: items[0]?.crop.sellerId || 'seller-unknown',
-        sellerName: sellerNames.join(', '),
-        items: newOrderItems,
-        status: 'pending',
-        totalAmount: subtotal + 4500, // include delivery fee
-        deliveryFee: 4500,
-        deliveryAddress: {
-          address: deliveryLocation.address,
-          coordinates: deliveryLocation.coordinates,
-        },
-        createdAt: new Date(),
-        estimatedDelivery: new Date(new Date().getTime() + 30 * 60 * 1000), // 30 mins from now
-        tracking: {
-          currentStatus: 'Order Placed',
-          lastUpdate: new Date(),
-          timeline: [{ status: 'Order Placed', time: new Date(), completed: true, current: true }],
-        },
+      // Create the order
+      const orderData = {
+        buyer_id: user.id,
+        seller_id: firstItem.crop.sellerId,
+        total_amount: subtotal + 4500, // include delivery fee
+        delivery_fee: 4500,
+        delivery_lat: deliveryLocation.coordinates.latitude,
+        delivery_lng: deliveryLocation.coordinates.longitude,
+        delivery_address: deliveryLocation.address,
+        phone_number: user.phone || '+255000000000',
+        notes: null,
+        estimated_delivery: new Date(new Date().getTime() + 30 * 60 * 1000).toISOString(), // 30 mins from now
       };
 
-      setOrders(prevOrders => [newOrder, ...prevOrders]);
-      
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItemsData = items.map(item => ({
+        order_id: order.id,
+        crop_id: item.crop.id,
+        quantity: item.quantity,
+        price_per_unit: item.crop.pricePerUnit,
+        total_price: item.crop.pricePerUnit * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsData);
+
+      if (itemsError) throw itemsError;
+
       toast({
         title: "Order Placed Successfully",
-        description: "Your order has been placed and is being processed.",
+        description: "Your order has been placed and the seller has been notified.",
       });
+      
       clearCart();
       setDeliveryLocation(null);
-      setIsCheckingOut(false);
+      
+      // Refresh orders to show the new one
+      await fetchUserOrders();
       
       window.location.href = "/my-orders";
-    }, 2000);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        title: "Order Failed",
+        description: "Failed to place order. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
   
   return {

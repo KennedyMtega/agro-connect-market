@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import Notifications from "@/components/Notifications";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 const Header = () => {
   const { user, profile, logout } = useAuth();
@@ -191,7 +191,7 @@ const Header = () => {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              <Notifications />
+              <NotificationDropdown />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
