@@ -110,9 +110,58 @@ const Inventory = () => {
     setFilterCategory(category);
   };
 
+  // Fuzzy search function to handle typos and similar words
+  const fuzzyMatch = (text: string, searchTerm: string): boolean => {
+    if (!searchTerm.trim()) return true;
+    
+    const textLower = text.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Exact match
+    if (textLower.includes(searchLower)) return true;
+    
+    // Remove common typos and variations
+    const cleanText = textLower.replace(/[^a-z0-9\s]/g, '');
+    const cleanSearch = searchLower.replace(/[^a-z0-9\s]/g, '');
+    
+    // Check if search term is contained after cleaning
+    if (cleanText.includes(cleanSearch)) return true;
+    
+    // Check for character similarity (simple Levenshtein-like approach)
+    const words = cleanText.split(' ');
+    const searchWords = cleanSearch.split(' ');
+    
+    for (const searchWord of searchWords) {
+      for (const word of words) {
+        // Check if words are similar (allow 1-2 character differences)
+        if (areSimilar(word, searchWord)) return true;
+      }
+    }
+    
+    return false;
+  };
+
+  // Simple similarity check for typos
+  const areSimilar = (word1: string, word2: string): boolean => {
+    if (Math.abs(word1.length - word2.length) > 2) return false;
+    
+    const minLength = Math.min(word1.length, word2.length);
+    if (minLength < 3) return word1 === word2;
+    
+    let differences = 0;
+    const maxLen = Math.max(word1.length, word2.length);
+    
+    for (let i = 0; i < maxLen; i++) {
+      if (word1[i] !== word2[i]) differences++;
+      if (differences > 2) return false;
+    }
+    
+    return differences <= 2;
+  };
+
   const filteredCrops = crops.filter((crop) => {
-    const matchesSearch = crop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (crop.description && crop.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = fuzzyMatch(crop.name, searchTerm) ||
+                         (crop.description && fuzzyMatch(crop.description, searchTerm));
     const matchesCategory = filterCategory === "all" || crop.category_id === filterCategory;
     return matchesSearch && matchesCategory;
   });
