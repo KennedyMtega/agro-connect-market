@@ -139,6 +139,19 @@ export const useOrderManagement = (
         throw new Error('Seller information not found');
       }
 
+      // Get user profile to ensure we have the latest phone number
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+      }
+
+      const userPhoneNumber = userProfile?.phone_number || user.phone || '+255000000000';
+
       // Create the order
       const orderData = {
         buyer_id: user.id,
@@ -148,7 +161,7 @@ export const useOrderManagement = (
         delivery_lat: deliveryLocation.coordinates.latitude,
         delivery_lng: deliveryLocation.coordinates.longitude,
         delivery_address: deliveryLocation.address,
-        phone_number: user.phone || '+255000000000',
+        phone_number: userPhoneNumber,
         notes: null,
         estimated_delivery: new Date(new Date().getTime() + 30 * 60 * 1000).toISOString(), // 30 mins from now
       };
