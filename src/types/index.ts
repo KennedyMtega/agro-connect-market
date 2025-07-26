@@ -82,6 +82,7 @@ export interface Order {
   sellerName?: string;
   items: OrderItem[];
   status: 'pending' | 'confirmed' | 'in_transit' | 'delivered' | 'cancelled';
+  paymentStatus?: string;
   totalAmount: number;
   deliveryFee: number;
   deliveryAddress: {

@@ -96,6 +96,30 @@ export const useOrderManagement = (
 
   useEffect(() => {
     fetchUserOrders();
+    
+    // Set up real-time subscription for order updates
+    if (!user) return;
+    
+    const channel = supabase
+      .channel('order-management-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `buyer_id=eq.${user.id}`
+        },
+        () => {
+          // Refetch orders when any order changes
+          fetchUserOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const getOrderById = (orderId: string) => {
@@ -163,6 +187,7 @@ export const useOrderManagement = (
         delivery_address: deliveryLocation.address,
         phone_number: userPhoneNumber,
         notes: null,
+        payment_status: 'pending',
         estimated_delivery: new Date(new Date().getTime() + 30 * 60 * 1000).toISOString(), // 30 mins from now
       };
 

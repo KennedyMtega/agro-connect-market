@@ -259,6 +259,12 @@ const OrderTrackingCard: React.FC<OrderTrackingCardProps> = ({
               <span>Delivery Fee</span>
               <span>{formatTZS(order.delivery_fee || 0)}</span>
             </div>
+            <div className="flex justify-between">
+              <span>Payment Status</span>
+              <Badge variant={order.payment_status === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                {order.payment_status || 'pending'}
+              </Badge>
+            </div>
             <div className="flex justify-between font-medium">
               <span>Total</span>
               <span>{formatTZS(order.total_amount)}</span>

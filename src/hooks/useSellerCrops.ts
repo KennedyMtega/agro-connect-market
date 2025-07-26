@@ -141,6 +141,30 @@ export const useSellerCrops = () => {
 
   useEffect(() => {
     fetchCrops();
+    
+    // Set up real-time subscription for crop updates
+    if (!user || !sellerProfile) return;
+    
+    const channel = supabase
+      .channel('seller-crops-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'crops',
+          filter: `seller_id=eq.${sellerProfile.id}`
+        },
+        () => {
+          // Refetch crops when any crop changes
+          fetchCrops();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, sellerProfile]);
 
   return {

@@ -270,6 +270,7 @@ export type Database = {
           estimated_delivery: string | null
           id: string
           notes: string | null
+          payment_status: string | null
           phone_number: string
           seller_id: string | null
           status: Database["public"]["Enums"]["order_status"] | null
@@ -286,6 +287,7 @@ export type Database = {
           estimated_delivery?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
           phone_number: string
           seller_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null
@@ -302,6 +304,7 @@ export type Database = {
           estimated_delivery?: string | null
           id?: string
           notes?: string | null
+          payment_status?: string | null
           phone_number?: string
           seller_id?: string | null
           status?: Database["public"]["Enums"]["order_status"] | null

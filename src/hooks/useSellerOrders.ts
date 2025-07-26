@@ -21,6 +21,7 @@ export interface Order {
   total_amount: number;
   delivery_fee: number;
   status: 'pending' | 'confirmed' | 'in_transit' | 'delivered' | 'cancelled';
+  payment_status?: string;
   delivery_address: string;
   phone_number: string;
   notes?: string;
@@ -102,6 +103,30 @@ export const useSellerOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Set up real-time subscription for order updates
+    if (!user || !sellerProfile) return;
+    
+    const channel = supabase
+      .channel('seller-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `seller_id=eq.${sellerProfile.id}`
+        },
+        () => {
+          // Refetch orders when any order changes
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, sellerProfile]);
 
   return {

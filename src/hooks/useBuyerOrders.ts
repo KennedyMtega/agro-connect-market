@@ -9,6 +9,7 @@ export interface BuyerOrder {
   total_amount: number;
   delivery_fee: number;
   status: 'pending' | 'confirmed' | 'in_transit' | 'delivered' | 'cancelled';
+  payment_status?: string;
   delivery_address: string;
   phone_number: string;
   notes?: string;
@@ -70,6 +71,30 @@ export const useBuyerOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Set up real-time subscription for order updates
+    if (!user) return;
+    
+    const channel = supabase
+      .channel('buyer-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `buyer_id=eq.${user.id}`
+        },
+        () => {
+          // Refetch orders when any order changes
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   return {
