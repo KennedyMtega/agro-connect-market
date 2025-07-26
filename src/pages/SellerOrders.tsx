@@ -17,9 +17,10 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useSellerOrders } from "@/hooks/useSellerOrders";
+import { useSellerOrders, Order } from "@/hooks/useSellerOrders";
 import { formatTZS } from "@/utils/currency";
 import { Badge } from "@/components/ui/badge";
+import OrderDetailModal from "@/components/orders/OrderDetailModal";
 
 const SellerOrders = () => {
   const { user } = useAuth();
@@ -28,6 +29,8 @@ const SellerOrders = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [sortField, setSortField] = useState<"date" | "total">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
 
   const filterOrders = (orders: any[]) => {
     let filtered = [...orders];
@@ -85,6 +88,16 @@ const SellerOrders = () => {
       default:
         return <Clock className="h-4 w-4" />;
     }
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsOrderDetailOpen(true);
+  };
+
+  const handleCloseOrderDetail = () => {
+    setIsOrderDetailOpen(false);
+    setSelectedOrder(null);
   };
 
   const displayedOrders = filterOrders(orders);
@@ -187,7 +200,11 @@ const SellerOrders = () => {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewOrder(order)}
+                            >
                               <Eye className="h-3 w-3 mr-1" />
                               View
                             </Button>
@@ -219,6 +236,14 @@ const SellerOrders = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Order Detail Modal */}
+        <OrderDetailModal
+          order={selectedOrder}
+          isOpen={isOrderDetailOpen}
+          onClose={handleCloseOrderDetail}
+          onUpdateStatus={updateOrderStatus}
+        />
       </div>
     </Layout>
   );

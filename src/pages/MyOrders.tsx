@@ -1,239 +1,153 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  Truck, 
-  Package, 
-  CheckCircle, 
-  ShoppingBag, 
-  XCircle,
-  MapPin,
-  Clock
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useBuyerOrders, BuyerOrder } from "@/hooks/useBuyerOrders";
-import { formatTZS } from "@/utils/currency";
-
-const OrderCard = ({ order }: { order: BuyerOrder }) => {
-
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">Order #{order.id.slice(-8)}</CardTitle>
-              <Badge
-                variant={
-                  order.status === "pending" 
-                    ? "outline" 
-                    : order.status === "in_transit" 
-                    ? "secondary"
-                    : order.status === "delivered" 
-                    ? "default"
-                    : "destructive"
-                }
-              >
-                {order.status === "in_transit" ? "In Transit" : 
-                  order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-              </Badge>
-            </div>
-            <CardDescription>Placed on {new Date(order.created_at).toLocaleDateString()}</CardDescription>
-          </div>
-          <div className="text-right">
-            <span className="font-bold">{formatTZS(order.total_amount)}</span>
-            <div className="text-xs text-muted-foreground">From {order.seller_profiles?.business_name || 'Unknown Seller'}</div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-sm font-medium mb-2">Order Items</h4>
-            <div className="space-y-2">
-              {(order.order_items || []).map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>
-                    {item.quantity} × {item.crops?.name || 'Unknown Crop'}
-                  </span>
-                  <span className="font-medium">
-                    {formatTZS(item.total_price)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="flex justify-between items-center">
-            {order.status === "pending" && (
-              <div className="flex items-center text-amber-600">
-                <Clock className="h-4 w-4 mr-2" />
-                <span className="text-sm">Processing order</span>
-              </div>
-            )}
-            
-            {order.status === "in_transit" && (
-              <div className="flex items-center text-blue-600">
-                <Truck className="h-4 w-4 mr-2" />
-                <span className="text-sm">In Transit</span>
-              </div>
-            )}
-            
-            {order.status === "delivered" && (
-              <div className="flex items-center text-green-600">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                <span className="text-sm">Delivered on {new Date(order.updated_at).toLocaleDateString()}</span>
-              </div>
-            )}
-            
-            {order.status === "cancelled" && (
-              <div className="flex items-center text-red-600">
-                <XCircle className="h-4 w-4 mr-2" />
-                <span className="text-sm">Cancelled</span>
-              </div>
-            )}
-            
-            <div className="flex gap-2">
-              {order.status === "in_transit" && (
-                <Link to={`/order/${order.id}/tracking`}>
-                  <Button variant="outline" size="sm">
-                    Track Order
-                  </Button>
-                </Link>
-              )}
-              
-              <Link to={`/order/${order.id}/tracking`}>
-                <Button variant="outline" size="sm">
-                  View Details
-                </Button>
-              </Link>
-            </div>
-          </div>
-          
-          {order.status === "in_transit" && (
-            <div className="mt-2 text-xs text-muted-foreground flex items-center">
-              <MapPin className="h-3 w-3 mr-1" />
-              <span>On the way to {order.delivery_address}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const EmptyState = ({ type }: { type: string }) => (
-  <div className="flex flex-col items-center justify-center py-12">
-    <div className="bg-muted rounded-full p-3 mb-4">
-      {type === "all" ? (
-        <ShoppingBag className="h-6 w-6 text-muted-foreground" />
-      ) : type === "active" ? (
-        <Truck className="h-6 w-6 text-muted-foreground" />
-      ) : (
-        <Package className="h-6 w-6 text-muted-foreground" />
-      )}
-    </div>
-    <h3 className="text-lg font-medium mb-1">No orders found</h3>
-    <p className="text-muted-foreground text-center max-w-md">
-      {type === "all" 
-        ? "You haven't placed any orders yet. Start by browsing crops in the marketplace."
-        : type === "active" 
-        ? "You don't have any active orders at the moment."
-        : "You don't have any completed orders yet."
-      }
-    </p>
-    <Link to="/search">
-      <Button className="mt-4">Browse Crops</Button>
-    </Link>
-  </div>
-);
+import { Input } from "@/components/ui/input";
+import { Package, Search, Filter, RefreshCw } from "lucide-react";
+import { useBuyerOrders } from "@/hooks/useBuyerOrders";
+import OrderTrackingCard from "@/components/orders/OrderTrackingCard";
+import { supabase } from "@/integrations/supabase/client";
 
 const MyOrders = () => {
+  const { orders, loading, refetch } = useBuyerOrders();
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const { orders, loading } = useBuyerOrders();
-  
-  const activeOrders = orders.filter(order => 
-    order.status === "pending" || order.status === "in_transit"
-  );
-  
-  const completedOrders = orders.filter(order => 
-    order.status === "delivered" || order.status === "cancelled"
-  );
+
+  // Set up real-time subscription for order updates
+  useEffect(() => {
+    const subscription = supabase
+      .channel('buyer_orders')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'orders'
+        }, 
+        (payload) => {
+          console.log('Order update received:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [refetch]);
+
+  const filterOrders = (orders: any[]) => {
+    let filtered = [...orders];
+    
+    if (activeTab !== "all") {
+      if (activeTab === "active") {
+        filtered = filtered.filter(order => 
+          ['pending', 'confirmed', 'in_transit'].includes(order.status)
+        );
+      } else if (activeTab === "completed") {
+        filtered = filtered.filter(order => 
+          ['delivered', 'cancelled'].includes(order.status)
+        );
+      }
+    }
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        order => 
+          order.id.toLowerCase().includes(query) ||
+          order.seller_profiles?.business_name?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  };
+
+  const handleCallSeller = (order: any) => {
+    const sellerPhone = "+255000000000"; // Placeholder
+    window.open(`tel:${sellerPhone}`);
+  };
+
+  const displayedOrders = filterOrders(orders);
 
   return (
     <Layout>
       <div className="container py-6">
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My Orders</h1>
             <p className="text-muted-foreground">
               Track and manage your crop purchases
             </p>
           </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search orders..."
+                className="pl-8 w-[250px]"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => refetch()}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-
-        <Tabs defaultValue="all" className="space-y-4">
+        
+        <Tabs defaultValue="all" className="space-y-4" onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger 
-              value="all" 
-              onClick={() => setActiveTab("all")}
-            >
-              All Orders
-            </TabsTrigger>
-            <TabsTrigger 
-              value="active" 
-              onClick={() => setActiveTab("active")}
-            >
-              Active Orders
-            </TabsTrigger>
-            <TabsTrigger 
-              value="completed" 
-              onClick={() => setActiveTab("completed")}
-            >
-              Completed
-            </TabsTrigger>
+            <TabsTrigger value="all">All Orders</TabsTrigger>
+            <TabsTrigger value="active">Active Orders</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="all">
-            {loading ? (
-              <div className="text-center py-8">Loading orders...</div>
-            ) : orders.length > 0 ? (
-              orders.map(order => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            ) : (
-              <EmptyState type="all" />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="active">
-            {loading ? (
-              <div className="text-center py-8">Loading orders...</div>
-            ) : activeOrders.length > 0 ? (
-              activeOrders.map(order => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            ) : (
-              <EmptyState type="active" />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="completed">
-            {loading ? (
-              <div className="text-center py-8">Loading orders...</div>
-            ) : completedOrders.length > 0 ? (
-              completedOrders.map(order => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            ) : (
-              <EmptyState type="completed" />
-            )}
+          <TabsContent value={activeTab} className="space-y-4">
+            <div className="space-y-6">
+              {loading ? (
+                <div className="text-center py-8">
+                  <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground animate-pulse" />
+                  <p>Loading your orders...</p>
+                </div>
+              ) : displayedOrders.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+                  {displayedOrders.map((order) => (
+                    <OrderTrackingCard
+                      key={order.id}
+                      order={order}
+                      onCallSeller={() => handleCallSeller(order)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-lg font-medium mb-2">No orders found</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {searchQuery 
+                        ? "Try adjusting your search query" 
+                        : `You don't have any ${activeTab === "all" ? "" : activeTab + " "}orders yet`}
+                    </p>
+                    <Button onClick={() => window.location.href = "/search"}>
+                      Start Shopping
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
