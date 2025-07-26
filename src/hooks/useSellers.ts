@@ -86,16 +86,18 @@ export const useSellers = () => {
         delivery_radius_km: seller.delivery_radius_km || 10,
         verification_status: seller.verification_status || 'pending',
         user_id: seller.user_id,
-        crops: (seller.crops || []).map((crop: any) => ({
-          id: crop.id,
-          name: crop.name,
-          description: crop.description || '',
-          price_per_unit: crop.price_per_unit,
-          unit: crop.unit,
-          quantity_available: crop.quantity_available,
-          is_organic: crop.is_organic || false,
-          category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
-        })),
+        crops: (seller.crops || [])
+          .filter((crop: any) => crop.is_active) // Filter active crops only
+          .map((crop: any) => ({
+            id: crop.id,
+            name: crop.name,
+            description: crop.description || '',
+            price_per_unit: crop.price_per_unit,
+            unit: crop.unit,
+            quantity_available: crop.quantity_available,
+            is_organic: crop.is_organic || false,
+            category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
+          })),
         profile: seller.profiles ? {
           full_name: seller.profiles.full_name,
           location_lat: seller.store_location_lat,
