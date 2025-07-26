@@ -41,8 +41,11 @@ const Landing = () => {
   const [activeTab, setActiveTab] = useState("buyers");
   
   const selectUserPath = (userType: 'buyer' | 'seller') => {
-    localStorage.setItem('selectedUserType', userType);
-    navigate("/auth");
+    if (userType === 'buyer') {
+      navigate("/user-onboarding");
+    } else {
+      navigate("/seller-onboarding");
+    }
   };
   
   return (
