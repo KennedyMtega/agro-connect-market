@@ -88,12 +88,10 @@ const Profile = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Email Notification - Show at the top for buyers */}
-          {profile.user_type === "buyer" && (
-            <div className="md:col-span-3">
-              <EmailNotification />
-            </div>
-          )}
+          {/* Email Notification - Show at the top for all users with temp emails */}
+          <div className="md:col-span-3">
+            <EmailNotification />
+          </div>
 
           {/* Profile Summary */}
           <Card className="md:col-span-1">

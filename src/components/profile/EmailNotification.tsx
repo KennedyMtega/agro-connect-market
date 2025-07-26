@@ -24,6 +24,8 @@ const EmailNotification = () => {
       setShowNotification(false);
     } else {
       setShowNotification(true);
+      // Set current email in input field for editing
+      setEmail(user?.email || "");
     }
   }, [user?.email]);
 
