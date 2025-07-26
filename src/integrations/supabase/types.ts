@@ -334,6 +334,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          is_onboarded: boolean | null
           is_phone_verified: boolean | null
           location_lat: number | null
           location_lng: number | null
@@ -350,6 +351,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id: string
+          is_onboarded?: boolean | null
           is_phone_verified?: boolean | null
           location_lat?: number | null
           location_lng?: number | null
@@ -366,6 +368,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          is_onboarded?: boolean | null
           is_phone_verified?: boolean | null
           location_lat?: number | null
           location_lng?: number | null
