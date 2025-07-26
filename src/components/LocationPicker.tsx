@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Navigation } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { MapPin, Navigation, Search } from 'lucide-react';
 import { GOOGLE_MAPS_API_KEY } from '@/constants/googleMaps';
 import { useToast } from '@/hooks/use-toast';
 
@@ -13,9 +15,12 @@ interface LocationPickerProps {
 const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, currentLocation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(currentLocation);
+  const [addressInput, setAddressInput] = useState(currentLocation?.address || '');
+  const [isSearching, setIsSearching] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,6 +112,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, curre
         const address = response.results[0].formatted_address;
         const location = { lat, lng, address };
         setSelectedLocation(location);
+        setAddressInput(address);
       }
     } catch (error) {
       console.error('Reverse geocoding error:', error);
@@ -115,6 +121,54 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, curre
         description: "Failed to get address for this location.",
         variant: "destructive",
       });
+    }
+  };
+
+  const searchAddress = async () => {
+    if (!addressInput.trim()) {
+      toast({
+        title: "Enter Address",
+        description: "Please enter an address to search.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const response = await geocoder.geocode({ address: addressInput });
+      
+      if (response.results && response.results.length > 0) {
+        const result = response.results[0];
+        const lat = result.geometry.location.lat();
+        const lng = result.geometry.location.lng();
+        const address = result.formatted_address;
+        
+        updateMarkerPosition(lat, lng);
+        setSelectedLocation({ lat, lng, address });
+        setAddressInput(address);
+        
+        toast({
+          title: "Address Found",
+          description: "Location has been updated on the map.",
+        });
+      } else {
+        toast({
+          title: "Address Not Found",
+          description: "Could not find the specified address. Please try a different one.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search for the address. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -138,6 +192,11 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, curre
             variant: "destructive",
           });
           setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     } else {
@@ -174,10 +233,31 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, curre
           Set Business Location
         </CardTitle>
         <CardDescription>
-          Click on the map or use current location to set your business address
+          Enter an address or click on the map to set your business location
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="address">Business Address</Label>
+          <div className="flex gap-2">
+            <Input
+              id="address"
+              value={addressInput}
+              onChange={(e) => setAddressInput(e.target.value)}
+              placeholder="Enter business address..."
+              onKeyPress={(e) => e.key === 'Enter' && searchAddress()}
+            />
+            <Button 
+              onClick={searchAddress} 
+              disabled={isSearching}
+              variant="outline"
+              size="icon"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        
         <div className="flex gap-2">
           <Button 
             onClick={getCurrentLocation} 
