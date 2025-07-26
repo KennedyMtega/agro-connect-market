@@ -53,8 +53,6 @@ export const useSellers = () => {
           *,
           profiles!seller_profiles_user_id_fkey (
             full_name,
-            location_lat,
-            location_lng,
             city
           ),
           crops (
@@ -72,7 +70,8 @@ export const useSellers = () => {
           )
         `)
         .eq('verification_status', 'verified')
-        .eq('crops.is_active', true);
+        .not('store_location_lat', 'is', null)
+        .not('store_location_lng', 'is', null);
 
       if (sellersError) {
         throw sellersError;
@@ -99,8 +98,8 @@ export const useSellers = () => {
         })),
         profile: seller.profiles ? {
           full_name: seller.profiles.full_name,
-          location_lat: seller.profiles.location_lat,
-          location_lng: seller.profiles.location_lng,
+          location_lat: seller.store_location_lat,
+          location_lng: seller.store_location_lng,
           city: seller.profiles.city,
         } : undefined,
         // Add default values for UI
