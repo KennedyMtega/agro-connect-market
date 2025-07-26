@@ -77,7 +77,7 @@ const UserOnboarding = () => {
         .from('profiles')
         .select('id')
         .eq('phone_number', formattedPhone)
-        .single();
+        .maybeSingle();
 
       if (existingProfile) {
         toast.error("An account with this phone number already exists. Please sign in instead.");
@@ -128,13 +128,13 @@ const UserOnboarding = () => {
       const formattedPhone = formatTzPhone(signInData.phone);
       
       // First, get the profile to verify it's a buyer
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('id, user_type')
         .eq('phone_number', formattedPhone)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profile) {
+      if (!profile) {
         toast.error("No account found with this phone number. Please sign up first.");
         return;
       }

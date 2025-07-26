@@ -100,7 +100,7 @@ const SellerOnboarding = () => {
         .from('profiles')
         .select('id')
         .eq('phone_number', formattedPhone)
-        .single();
+        .maybeSingle();
 
       if (existingProfile) {
         toast({
@@ -171,13 +171,13 @@ const SellerOnboarding = () => {
       const formattedPhone = formatTzPhone(signInData.phone);
       
       // First, get the profile to verify it's a seller
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('id, user_type')
         .eq('phone_number', formattedPhone)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profile) {
+      if (!profile) {
         toast({
           title: "Account Not Found",
           description: "No account found with this phone number. Please sign up first.",
