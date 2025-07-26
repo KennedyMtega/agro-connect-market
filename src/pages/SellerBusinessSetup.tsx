@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Leaf, MapPin, Phone, Building, CheckCircle } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import LocationPicker from "@/components/LocationPicker";
 
 const SellerBusinessSetup = () => {
   const navigate = useNavigate();
@@ -23,8 +24,6 @@ const SellerBusinessSetup = () => {
   const [businessData, setBusinessData] = useState({
     businessName: "",
     businessDescription: "",
-    businessNumber: "",
-    businessLicense: "",
     deliveryRadius: 10,
     hasWhatsApp: false,
     whatsAppNumber: "",
@@ -40,14 +39,23 @@ const SellerBusinessSetup = () => {
     tinCertificate: "",
   });
 
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    setBusinessData({
+      ...businessData,
+      storeLocation: location.address,
+      storeLocationLat: location.lat,
+      storeLocationLng: location.lng,
+    });
+  };
+
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessData.businessName || !businessData.businessDescription || !businessData.businessNumber || 
+    if (!businessData.businessName || !businessData.businessDescription || 
         !businessData.ownerName || !businessData.ownerIdNumber || !businessData.brelaCertificate || 
-        !businessData.businessCertificate || !businessData.tinCertificate) {
+        !businessData.businessCertificate || !businessData.tinCertificate || !businessData.storeLocation) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields including owner information and business documents.",
+        description: "Please fill in all required fields including business location and documents.",
         variant: "destructive",
       });
       return;
@@ -69,8 +77,6 @@ const SellerBusinessSetup = () => {
           .update({
             business_name: businessData.businessName,
             business_description: businessData.businessDescription,
-            business_number: businessData.businessNumber,
-            business_license: businessData.businessLicense,
             delivery_radius_km: businessData.deliveryRadius,
             has_whatsapp: businessData.hasWhatsApp,
             whatsapp_number: businessData.whatsAppNumber,
@@ -96,8 +102,6 @@ const SellerBusinessSetup = () => {
             user_id: user?.id,
             business_name: businessData.businessName,
             business_description: businessData.businessDescription,
-            business_number: businessData.businessNumber,
-            business_license: businessData.businessLicense,
             delivery_radius_km: businessData.deliveryRadius,
             has_whatsapp: businessData.hasWhatsApp,
             whatsapp_number: businessData.whatsAppNumber,
@@ -186,28 +190,6 @@ const SellerBusinessSetup = () => {
                 />
               </div>
 
-              {/* Business Number */}
-              <div className="space-y-2">
-                <Label htmlFor="businessNumber">Business Registration Number *</Label>
-                <Input
-                  id="businessNumber"
-                  value={businessData.businessNumber}
-                  onChange={(e) => setBusinessData({...businessData, businessNumber: e.target.value})}
-                  placeholder="Your business registration number"
-                  required
-                />
-              </div>
-              
-              {/* Business License */}
-              <div className="space-y-2">
-                <Label htmlFor="businessLicense">Business License (Optional)</Label>
-                <Input
-                  id="businessLicense"
-                  value={businessData.businessLicense}
-                  onChange={(e) => setBusinessData({...businessData, businessLicense: e.target.value})}
-                  placeholder="License number if available"
-                />
-              </div>
 
               {/* WhatsApp Information */}
               <div className="space-y-4 p-4 border rounded-lg">
@@ -236,19 +218,19 @@ const SellerBusinessSetup = () => {
                 )}
               </div>
 
-              {/* Store Location */}
-              <div className="space-y-2">
-                <Label htmlFor="storeLocation" className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Store/Farm Location
-                </Label>
-                <Input
-                  id="storeLocation"
-                  value={businessData.storeLocation}
-                  onChange={(e) => setBusinessData({...businessData, storeLocation: e.target.value})}
-                  placeholder="Street address of your store or farm"
-                />
-              </div>
+              {/* Location Picker */}
+              <LocationPicker 
+                onLocationSelect={handleLocationSelect}
+                currentLocation={
+                  businessData.storeLocationLat && businessData.storeLocationLng 
+                    ? {
+                        lat: businessData.storeLocationLat,
+                        lng: businessData.storeLocationLng,
+                        address: businessData.storeLocation
+                      }
+                    : undefined
+                }
+              />
 
               {/* Owner Information */}
               <div className="space-y-4 p-4 border rounded-lg">

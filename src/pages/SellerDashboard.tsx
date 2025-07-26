@@ -2,6 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   BarChart, 
   LineChart, 
@@ -13,20 +14,35 @@ import {
   Truck,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Plus,
+  Bell,
+  MoreHorizontal,
+  Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { formatTZS } from "@/utils/currency";
 import { useNavigate } from "react-router-dom";
-
-// All data will be loaded from database - no mock data
+import { useSellerCrops } from "@/hooks/useSellerCrops";
+import { useSellerOrders } from "@/hooks/useSellerOrders";
+import { useSellerNotifications } from "@/hooks/useSellerNotifications";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const SellerDashboard = () => {
   const { user, profile, sellerProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  const { crops, loading: cropsLoading, addCrop, updateCrop, deleteCrop } = useSellerCrops();
+  const { orders, loading: ordersLoading, updateOrderStatus } = useSellerOrders();
+  const { notifications, loading: notificationsLoading, markAsRead, unreadCount } = useSellerNotifications();
+
+  // Calculate metrics from real data
+  const totalRevenue = orders.filter(o => o.status === 'delivered').reduce((sum, order) => sum + order.total_amount, 0);
+  const totalOrders = orders.length;
+  const activeBuyers = new Set(orders.map(o => o.buyer_id)).size;
 
   return (
     <Layout>
@@ -39,10 +55,13 @@ const SellerDashboard = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => navigate('/seller-business-setup')}>
+            <Button onClick={() => navigate('/seller-business-setup')} variant="outline">
               Edit Business Info
             </Button>
-            <Button>+ Add New Crop</Button>
+            <Button onClick={() => navigate('/inventory')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Crop
+            </Button>
           </div>
         </div>
 
@@ -64,9 +83,9 @@ const SellerDashboard = () => {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatTZS(0)}</div>
+                  <div className="text-2xl font-bold">{formatTZS(totalRevenue)}</div>
                   <p className="text-xs text-muted-foreground">
-                    No sales yet
+                    {totalRevenue > 0 ? `From ${orders.filter(o => o.status === 'delivered').length} completed orders` : 'No sales yet'}
                   </p>
                 </CardContent>
               </Card>
@@ -79,9 +98,9 @@ const SellerDashboard = () => {
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{totalOrders}</div>
                   <p className="text-xs text-muted-foreground">
-                    No orders yet
+                    {totalOrders > 0 ? `${orders.filter(o => o.status === 'pending').length} pending` : 'No orders yet'}
                   </p>
                 </CardContent>
               </Card>
@@ -94,9 +113,9 @@ const SellerDashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">0</div>
+                  <div className="text-2xl font-bold">{activeBuyers}</div>
                   <p className="text-xs text-muted-foreground">
-                    No buyers yet
+                    {activeBuyers > 0 ? 'Unique customers' : 'No buyers yet'}
                   </p>
                 </CardContent>
               </Card>
@@ -139,11 +158,27 @@ const SellerDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No recent orders yet</p>
-                      <p className="text-sm">Orders will appear here once customers start purchasing</p>
-                    </div>
+                    {ordersLoading ? (
+                      <div className="text-center py-8">Loading orders...</div>
+                    ) : orders.length > 0 ? (
+                      orders.slice(0, 5).map((order) => (
+                        <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">Order #{order.id.slice(-8)}</p>
+                            <p className="text-xs text-muted-foreground">{order.profiles?.full_name}</p>
+                          </div>
+                          <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+                            {order.status}
+                          </Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No recent orders yet</p>
+                        <p className="text-sm">Orders will appear here once customers start purchasing</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -159,11 +194,30 @@ const SellerDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No crops added yet</p>
-                      <p className="text-sm">Add crops to your inventory to start selling</p>
-                    </div>
+                    {cropsLoading ? (
+                      <div className="text-center py-8">Loading inventory...</div>
+                    ) : crops.length > 0 ? (
+                      crops.slice(0, 5).map((crop) => (
+                        <div key={crop.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">{crop.name}</p>
+                            <p className="text-xs text-muted-foreground">{crop.quantity_available} {crop.unit} available</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{formatTZS(crop.price_per_unit)}/{crop.unit}</p>
+                            <Badge variant={crop.quantity_available > 0 ? 'default' : 'destructive'}>
+                              {crop.quantity_available > 0 ? 'In Stock' : 'Out of Stock'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No crops added yet</p>
+                        <p className="text-sm">Add crops to your inventory to start selling</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -201,11 +255,49 @@ const SellerDashboard = () => {
                     <div>Actions</div>
                   </div>
                   
-                  <div className="text-center py-8 text-muted-foreground border-t">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No orders yet</p>
-                    <p className="text-sm">Orders from customers will appear here</p>
-                  </div>
+                  {ordersLoading ? (
+                    <div className="text-center py-8 border-t">Loading orders...</div>
+                  ) : orders.length > 0 ? (
+                    orders.map((order) => (
+                      <div key={order.id} className="grid grid-cols-6 p-3 border-t text-sm">
+                        <div>#{order.id.slice(-8)}</div>
+                        <div>{order.profiles?.full_name || 'Unknown'}</div>
+                        <div>{order.order_items?.length || 0} items</div>
+                        <div>{formatTZS(order.total_amount)}</div>
+                        <div>
+                          <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'confirmed')}>
+                                Mark as Confirmed
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'in_transit')}>
+                                Mark as In Transit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'delivered')}>
+                                Mark as Delivered
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground border-t">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No orders yet</p>
+                      <p className="text-sm">Orders from customers will appear here</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -230,11 +322,55 @@ const SellerDashboard = () => {
                     <div>Actions</div>
                   </div>
                   
-                  <div className="text-center py-8 text-muted-foreground border-t">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No crops in inventory</p>
-                    <p className="text-sm">Add crops to start managing your inventory</p>
-                  </div>
+                  {cropsLoading ? (
+                    <div className="text-center py-8 border-t">Loading inventory...</div>
+                  ) : crops.length > 0 ? (
+                    crops.map((crop) => (
+                      <div key={crop.id} className="grid grid-cols-6 p-3 border-t text-sm">
+                        <div>{crop.name}</div>
+                        <div>{crop.quantity_available} {crop.unit}</div>
+                        <div>{formatTZS(crop.price_per_unit)}/{crop.unit}</div>
+                        <div>
+                          <Badge variant={crop.is_active ? 'default' : 'secondary'}>
+                            {crop.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                        <div>{new Date(crop.updated_at).toLocaleDateString()}</div>
+                        <div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => navigate('/inventory')}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Crop
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => updateCrop(crop.id, { is_active: !crop.is_active })}
+                              >
+                                {crop.is_active ? 'Deactivate' : 'Activate'}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => deleteCrop(crop.id)}
+                                className="text-red-600"
+                              >
+                                Delete Crop
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground border-t">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No crops in inventory</p>
+                      <p className="text-sm">Add crops to start managing your inventory</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
