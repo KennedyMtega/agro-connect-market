@@ -63,66 +63,37 @@ const SellerBusinessSetup = () => {
 
     setLoading(true);
     try {
-      // Check if seller profile already exists
-      const { data: existingSeller } = await supabase
+      // Use upsert to handle both insert and update in one operation
+      const { data, error } = await supabase
         .from('seller_profiles')
-        .select('*')
-        .eq('user_id', user?.id)
+        .upsert({
+          user_id: user?.id,
+          business_name: businessData.businessName,
+          business_description: businessData.businessDescription,
+          delivery_radius_km: businessData.deliveryRadius,
+          has_whatsapp: businessData.hasWhatsApp,
+          whatsapp_number: businessData.whatsAppNumber,
+          store_location: businessData.storeLocation,
+          store_location_lat: businessData.storeLocationLat,
+          store_location_lng: businessData.storeLocationLng,
+          owner_name: businessData.ownerName,
+          owner_phone: businessData.ownerPhone,
+          owner_email: businessData.ownerEmail,
+          owner_id_number: businessData.ownerIdNumber,
+          brela_certificate: businessData.brelaCertificate,
+          business_certificate: businessData.businessCertificate,
+          tin_certificate: businessData.tinCertificate,
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
         .single();
 
-      if (existingSeller) {
-        // Update existing seller profile
-        const { error } = await supabase
-          .from('seller_profiles')
-          .update({
-            business_name: businessData.businessName,
-            business_description: businessData.businessDescription,
-            delivery_radius_km: businessData.deliveryRadius,
-            has_whatsapp: businessData.hasWhatsApp,
-            whatsapp_number: businessData.whatsAppNumber,
-            store_location: businessData.storeLocation,
-            store_location_lat: businessData.storeLocationLat,
-            store_location_lng: businessData.storeLocationLng,
-            owner_name: businessData.ownerName,
-            owner_phone: businessData.ownerPhone,
-            owner_email: businessData.ownerEmail,
-            owner_id_number: businessData.ownerIdNumber,
-            brela_certificate: businessData.brelaCertificate,
-            business_certificate: businessData.businessCertificate,
-            tin_certificate: businessData.tinCertificate,
-          })
-          .eq('user_id', user?.id);
-
-        if (error) throw error;
-      } else {
-        // Create new seller profile
-        const { error } = await supabase
-          .from('seller_profiles')
-          .insert({
-            user_id: user?.id,
-            business_name: businessData.businessName,
-            business_description: businessData.businessDescription,
-            delivery_radius_km: businessData.deliveryRadius,
-            has_whatsapp: businessData.hasWhatsApp,
-            whatsapp_number: businessData.whatsAppNumber,
-            store_location: businessData.storeLocation,
-            store_location_lat: businessData.storeLocationLat,
-            store_location_lng: businessData.storeLocationLng,
-            owner_name: businessData.ownerName,
-            owner_phone: businessData.ownerPhone,
-            owner_email: businessData.ownerEmail,
-            owner_id_number: businessData.ownerIdNumber,
-            brela_certificate: businessData.brelaCertificate,
-            business_certificate: businessData.businessCertificate,
-            tin_certificate: businessData.tinCertificate,
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Business Setup Complete!",
-        description: "Your business information has been saved successfully.",
+        description: "Your business information has been saved successfully. You can now start selling!",
       });
 
       navigate('/seller-dashboard');
