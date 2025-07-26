@@ -8,8 +8,10 @@ import { AuthProvider } from "@/context/auth/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import HomePage from "./pages/HomePage";
+import UserLanding from "./pages/UserLanding";
+import FarmerLanding from "./pages/FarmerLanding";
 import Auth from "./pages/Auth";
-// Removed VerifyPhone - using Auth.tsx instead
 import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
 import Inventory from "./pages/Inventory";
@@ -20,24 +22,32 @@ import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
 import SellerBusinessSetup from "./pages/SellerBusinessSetup";
-import OnBoarding from "./pages/OnBoarding";
-import RoleSelection from "./pages/RoleSelection";
+import UserOnboarding from "./pages/UserOnboarding";
 import SellerOnboarding from "./pages/SellerOnboarding";
 
-// Redirect component based on authentication status
-const RedirectToAuth = () => {
+// Redirect component for authenticated users
+const AuthenticatedRedirect = () => {
   const { user, profile, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // If user is not logged in, redirect to role selection instead of onboarding
+  // If user is not logged in, show landing page
   if (!user) {
-    return <Navigate to="/role-selection" />;
+    return <HomePage />;
   }
   
-  // If user is logged in, redirect based on type
+  // If user is logged in but not onboarded, redirect to onboarding
+  if (!profile?.is_onboarded) {
+    if (profile?.user_type === "buyer") {
+      return <Navigate to="/user-onboarding" />;
+    } else if (profile?.user_type === "seller") {
+      return <Navigate to="/seller-onboarding" />;
+    }
+  }
+  
+  // If user is logged in and onboarded, redirect based on type
   if (profile?.user_type === "buyer") {
     return <Navigate to="/search" />;
   } else if (profile?.user_type === "seller") {
@@ -61,18 +71,20 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Root redirects based on auth status */}
-              <Route path="/" element={<RedirectToAuth />} />
+              <Route path="/" element={<AuthenticatedRedirect />} />
               
-              {/* Role selection and onboarding */}
-              <Route path="/role-selection" element={<RoleSelection />} />
-              <Route path="/onboarding" element={<OnBoarding />} />
+              {/* Landing pages */}
+              <Route path="/user" element={<UserLanding />} />
+              <Route path="/farmer" element={<FarmerLanding />} />
+              
+              {/* Onboarding */}
+              <Route path="/user-onboarding" element={<UserOnboarding />} />
               <Route path="/seller-onboarding" element={<SellerOnboarding />} />
               
               {/* Auth routes */}
               <Route path="/auth" element={<Auth />} />
-              {/* Removed /verify-phone route - using Auth.tsx instead */}
               
-              {/* Buyer routes */}
+              {/* User routes */}
               <Route 
                 path="/search" 
                 element={
