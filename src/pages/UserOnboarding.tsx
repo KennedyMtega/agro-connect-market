@@ -32,10 +32,8 @@ const UserOnboarding = () => {
     password: "",
   });
 
-  // Profile Form (for existing users)
+  // Profile Form (for existing users) - simplified to only essential missing info
   const [formData, setFormData] = useState({
-    fullName: profile?.full_name || "",
-    phoneNumber: profile?.phone_number || "",
     deliveryAddress: "",
     city: "",
     region: ""
@@ -172,29 +170,12 @@ const UserOnboarding = () => {
   const handleComplete = async () => {
     if (!user) return;
     
-    // Validate required fields
-    if (!formData.fullName || !formData.phoneNumber) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
-
-    // Validate phone number
-    const phoneError = getTzPhoneError(formData.phoneNumber);
-    if (phoneError) {
-      toast.error(phoneError);
-      return;
-    }
-    
     setIsLoading(true);
     try {
-      // Format phone number properly
-      const formattedPhone = formatTzPhone(formData.phoneNumber);
-      
+      // Since name and phone are already set during signup, just mark as onboarded
       const { error } = await supabase
         .from('profiles')
         .update({
-          full_name: formData.fullName,
-          phone_number: formattedPhone,
           is_onboarded: true
         })
         .eq('id', user.id);
@@ -247,38 +228,15 @@ const UserOnboarding = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="flex items-center text-sm font-medium">
-                  <User className="w-4 h-4 mr-2" />
-                  Full Name
-                </Label>
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => handleInputChange('fullName', e.target.value)}
-                  className="border-blue-200 focus:border-blue-400"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber" className="flex items-center text-sm font-medium">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="phoneNumber"
-                  placeholder="+255 XXX XXX XXX or 0XXX XXX XXX"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  className="border-blue-200 focus:border-blue-400"
-                />
+              <div className="text-center p-4 bg-blue-50 rounded-lg mb-6">
+                <p className="text-blue-800 font-medium">Welcome {profile?.full_name}!</p>
+                <p className="text-blue-600 text-sm">Your account is ready. You can start shopping immediately or add optional details below.</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="deliveryAddress" className="flex items-center text-sm font-medium">
                   <MapPin className="w-4 h-4 mr-2" />
-                  Delivery Address
+                  Delivery Address (Optional)
                 </Label>
                 <Input
                   id="deliveryAddress"
@@ -292,7 +250,7 @@ const UserOnboarding = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city" className="text-sm font-medium">
-                    City
+                    City (Optional)
                   </Label>
                   <Input
                     id="city"
@@ -304,7 +262,7 @@ const UserOnboarding = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="region" className="text-sm font-medium">
-                    Region
+                    Region (Optional)
                   </Label>
                   <Input
                     id="region"
@@ -320,14 +278,14 @@ const UserOnboarding = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 size="lg"
                 onClick={handleComplete}
-                disabled={isLoading || !formData.fullName || !formData.phoneNumber}
+                disabled={isLoading}
               >
                 {isLoading ? "Setting up..." : "Start Shopping"}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
 
               <div className="text-center text-sm text-gray-500">
-                You can update these details anytime in your profile
+                You can add or update these details anytime in your profile
               </div>
             </CardContent>
           </Card>

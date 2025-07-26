@@ -43,11 +43,10 @@ const SellerOnboarding = () => {
     password: "",
   });
 
+  // Simplified - name and phone already collected during signup
   const [personalData, setPersonalData] = useState({
-    fullName: "",
-    phoneNumber: "",
     address: "",
-    city: "Dar es Salaam",
+    city: "Dar es Salaam", 
     region: "",
   });
 
@@ -233,28 +232,7 @@ const SellerOnboarding = () => {
 
   const handlePersonalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!personalData.fullName || !personalData.phoneNumber) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate phone number
-    const phoneError = getTzPhoneError(personalData.phoneNumber);
-    if (phoneError) {
-      toast({
-        title: "Invalid Phone Number",
-        description: phoneError,
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Skip validation since name and phone are already set during signup
     setCurrentStep(2);
   };
 
@@ -274,19 +252,13 @@ const SellerOnboarding = () => {
       // Get user's email from Supabase auth
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Format phone number properly
-      const formattedPhone = formatTzPhone(personalData.phoneNumber);
-      
-      // Update user profile
+      // Update user profile with optional location data
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          full_name: personalData.fullName,
-          phone_number: formattedPhone,
           address: personalData.address,
           city: personalData.city,
           region: personalData.region,
-          email: user?.email, // Ensure email is stored
           is_onboarded: true,
         })
         .eq('id', user?.id);
@@ -360,87 +332,70 @@ const SellerOnboarding = () => {
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <Card className="w-full max-w-md shadow-lg">
           {currentStep === 1 ? (
-            <>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-green-900">
-                  Personal Information
-                </CardTitle>
-                <CardDescription>
-                  Let's start with your basic information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handlePersonalSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      value={personalData.fullName}
-                      onChange={(e) => setPersonalData({...personalData, fullName: e.target.value})}
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phoneNumber">Phone Number *</Label>
-                    <Input
-                      id="phoneNumber"
-                      value={personalData.phoneNumber}
-                      onChange={(e) => setPersonalData({...personalData, phoneNumber: e.target.value})}
-                      placeholder="+255 XXX XXX XXX or 0XXX XXX XXX"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={personalData.address}
-                      onChange={(e) => setPersonalData({...personalData, address: e.target.value})}
-                      placeholder="Street address"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Select value={personalData.city} onValueChange={(value) => setPersonalData({...personalData, city: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Dar es Salaam">Dar es Salaam</SelectItem>
-                          <SelectItem value="Dodoma">Dodoma</SelectItem>
-                          <SelectItem value="Mwanza">Mwanza</SelectItem>
-                          <SelectItem value="Arusha">Arusha</SelectItem>
-                          <SelectItem value="Mbeya">Mbeya</SelectItem>
-                          <SelectItem value="Morogoro">Morogoro</SelectItem>
-                          <SelectItem value="Tanga">Tanga</SelectItem>
-                          <SelectItem value="Iringa">Iringa</SelectItem>
-                        </SelectContent>
-                      </Select>
+              <>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold text-green-900">
+                    Additional Information
+                  </CardTitle>
+                  <CardDescription>
+                    Optional location details (you can skip this)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handlePersonalSubmit} className="space-y-4">
+                    <div className="text-center p-4 bg-green-50 rounded-lg mb-6">
+                      <p className="text-green-800 font-medium">Account created successfully!</p>
+                      <p className="text-green-600 text-sm">You can proceed directly to business setup or add optional location details.</p>
                     </div>
                     
                     <div>
-                      <Label htmlFor="region">Region</Label>
+                      <Label htmlFor="address">Address (Optional)</Label>
                       <Input
-                        id="region"
-                        value={personalData.region}
-                        onChange={(e) => setPersonalData({...personalData, region: e.target.value})}
-                        placeholder="Region"
+                        id="address"
+                        value={personalData.address}
+                        onChange={(e) => setPersonalData({...personalData, address: e.target.value})}
+                        placeholder="Street address"
                       />
                     </div>
-                  </div>
-                  
-                  <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                    Continue
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </form>
-              </CardContent>
-            </>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="city">City</Label>
+                        <Select value={personalData.city} onValueChange={(value) => setPersonalData({...personalData, city: value})}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Dar es Salaam">Dar es Salaam</SelectItem>
+                            <SelectItem value="Dodoma">Dodoma</SelectItem>
+                            <SelectItem value="Mwanza">Mwanza</SelectItem>
+                            <SelectItem value="Arusha">Arusha</SelectItem>
+                            <SelectItem value="Mbeya">Mbeya</SelectItem>
+                            <SelectItem value="Morogoro">Morogoro</SelectItem>
+                            <SelectItem value="Tanga">Tanga</SelectItem>
+                            <SelectItem value="Iringa">Iringa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="region">Region (Optional)</Label>
+                        <Input
+                          id="region"
+                          value={personalData.region}
+                          onChange={(e) => setPersonalData({...personalData, region: e.target.value})}
+                          placeholder="Region"
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+                      Continue to Business Setup
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </form>
+                </CardContent>
+              </>
           ) : (
             <>
               <CardHeader className="text-center">
