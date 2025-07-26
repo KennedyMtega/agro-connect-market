@@ -17,96 +17,19 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-
-const mockOrdersData = [
-  { 
-    id: "ord-001", 
-    buyer: "John Doe", 
-    buyerId: "buyer-1",
-    crop: "Organic Rice", 
-    quantity: 25, 
-    unit: "kg", 
-    total: 899.75, 
-    status: "pending", 
-    time: "Today, 10:15 AM",
-    address: "123 Main St, Seattle, WA",
-    createdAt: new Date(2023, 3, 15)
-  },
-  { 
-    id: "ord-002", 
-    buyer: "Sarah Lee", 
-    buyerId: "buyer-2",
-    crop: "Fresh Tomatoes", 
-    quantity: 15, 
-    unit: "kg", 
-    total: 44.85, 
-    status: "confirmed", 
-    time: "Today, 9:30 AM",
-    address: "456 Oak Ave, Portland, OR",
-    createdAt: new Date(2023, 3, 15)
-  },
-  { 
-    id: "ord-003", 
-    buyer: "Mike Wilson", 
-    buyerId: "buyer-3",
-    crop: "Sweet Corn", 
-    quantity: 50, 
-    unit: "ear", 
-    total: 37.50, 
-    status: "in_transit", 
-    time: "Yesterday, 2:45 PM",
-    address: "789 Pine St, San Francisco, CA",
-    createdAt: new Date(2023, 3, 14)
-  },
-  { 
-    id: "ord-004", 
-    buyer: "Emily Chen", 
-    buyerId: "buyer-4",
-    crop: "Russet Potatoes", 
-    quantity: 30, 
-    unit: "kg", 
-    total: 37.50, 
-    status: "delivered", 
-    time: "Yesterday, 11:20 AM",
-    address: "101 Maple Dr, Eugene, OR",
-    createdAt: new Date(2023, 3, 14)
-  },
-  { 
-    id: "ord-005", 
-    buyer: "James Brown", 
-    buyerId: "buyer-5",
-    crop: "Organic Carrots", 
-    quantity: 20, 
-    unit: "kg", 
-    total: 59.80, 
-    status: "delivered", 
-    time: "Apr 13, 3:15 PM",
-    address: "202 Cedar Ln, Boise, ID",
-    createdAt: new Date(2023, 3, 13)
-  },
-  { 
-    id: "ord-006", 
-    buyer: "Lisa Garcia", 
-    buyerId: "buyer-6",
-    crop: "Red Onions", 
-    quantity: 15, 
-    unit: "kg", 
-    total: 29.85, 
-    status: "cancelled", 
-    time: "Apr 12, 9:45 AM",
-    address: "303 Birch Rd, Tacoma, WA",
-    createdAt: new Date(2023, 3, 12)
-  },
-];
+import { useSellerOrders } from "@/hooks/useSellerOrders";
+import { formatTZS } from "@/utils/currency";
+import { Badge } from "@/components/ui/badge";
 
 const SellerOrders = () => {
   const { user } = useAuth();
+  const { orders, loading, updateOrderStatus } = useSellerOrders();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [sortField, setSortField] = useState<"date" | "total">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const filterOrders = (orders: typeof mockOrdersData) => {
+  const filterOrders = (orders: any[]) => {
     let filtered = [...orders];
     
     if (activeTab !== "all") {
@@ -118,20 +41,20 @@ const SellerOrders = () => {
       filtered = filtered.filter(
         order => 
           order.id.toLowerCase().includes(query) ||
-          order.buyer.toLowerCase().includes(query) ||
-          order.crop.toLowerCase().includes(query)
+          order.profiles?.full_name?.toLowerCase().includes(query) ||
+          order.order_items?.some((item: any) => item.crops?.name?.toLowerCase().includes(query))
       );
     }
     
     filtered.sort((a, b) => {
       if (sortField === "date") {
         return sortDirection === "asc" 
-          ? a.createdAt.getTime() - b.createdAt.getTime()
-          : b.createdAt.getTime() - a.createdAt.getTime();
+          ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       } else {
         return sortDirection === "asc"
-          ? a.total - b.total
-          : b.total - a.total;
+          ? a.total_amount - b.total_amount
+          : b.total_amount - a.total_amount;
       }
     });
     
@@ -164,7 +87,7 @@ const SellerOrders = () => {
     }
   };
 
-  const displayedOrders = filterOrders(mockOrdersData);
+  const displayedOrders = filterOrders(orders);
 
   return (
     <Layout>
@@ -232,34 +155,35 @@ const SellerOrders = () => {
                     <div>Actions</div>
                   </div>
                   
-                  {displayedOrders.length > 0 ? (
+                  {loading ? (
+                    <div className="p-8 text-center border-t">
+                      <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p>Loading orders...</p>
+                    </div>
+                  ) : displayedOrders.length > 0 ? (
                     displayedOrders.map((order) => (
                       <div 
                         key={order.id}
                         className="grid grid-cols-7 items-center p-3 text-sm border-t hover:bg-muted/30"
                       >
-                        <div className="font-medium">{order.id}</div>
-                        <div>{order.buyer}</div>
-                        <div>{order.crop} ({order.quantity} {order.unit})</div>
-                        <div>${order.total.toFixed(2)}</div>
-                        <div>{order.time}</div>
+                        <div className="font-medium">#{order.id.slice(-8)}</div>
+                        <div>{order.profiles?.full_name || 'Unknown'}</div>
+                        <div>{order.order_items?.length || 0} items</div>
+                        <div>{formatTZS(order.total_amount)}</div>
+                        <div>{new Date(order.created_at).toLocaleDateString()}</div>
                         <div>
-                          <span 
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium gap-1
-                              ${order.status === 'pending' 
-                                ? 'bg-yellow-100 text-yellow-800' 
-                                : order.status === 'confirmed' 
-                                ? 'bg-blue-100 text-blue-800'
-                                : order.status === 'in_transit'
-                                ? 'bg-purple-100 text-purple-800'
-                                : order.status === 'delivered'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                              }`}
+                          <Badge 
+                            variant={
+                              order.status === 'delivered' ? 'default' :
+                              order.status === 'pending' ? 'secondary' :
+                              order.status === 'confirmed' ? 'outline' :
+                              order.status === 'in_transit' ? 'outline' :
+                              'destructive'
+                            }
                           >
                             {getStatusIcon(order.status)}
-                            {order.status.replace('_', ' ')}
-                          </span>
+                            <span className="ml-1">{order.status.replace('_', ' ')}</span>
+                          </Badge>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -268,7 +192,10 @@ const SellerOrders = () => {
                               View
                             </Button>
                             {order.status === 'pending' && (
-                              <Button size="sm">
+                              <Button 
+                                size="sm" 
+                                onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                              >
                                 Accept
                               </Button>
                             )}
@@ -277,7 +204,7 @@ const SellerOrders = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="p-8 text-center">
+                    <div className="p-8 text-center border-t">
                       <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <h3 className="text-lg font-medium mb-1">No orders found</h3>
                       <p className="text-sm text-muted-foreground">

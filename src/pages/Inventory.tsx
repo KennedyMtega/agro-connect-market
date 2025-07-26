@@ -1,6 +1,6 @@
-import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
-import { Crop } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useSellerCrops } from "@/hooks/useSellerCrops";
 import Layout from "@/components/layout/Layout";
 import {
   Table,
@@ -59,75 +59,7 @@ import {
   Filter,
   FileImage,
 } from "lucide-react";
-
-// Mock crop data
-const mockCrops: Crop[] = [
-  {
-    id: "crop-1",
-    sellerId: "seller-1",
-    name: "Organic Rice",
-    description: "Premium quality organic rice, freshly harvested.",
-    category: "Grain",
-    pricePerUnit: 35.99,
-    unit: "50kg",
-    quantityAvailable: 430,
-    images: ["https://images.unsplash.com/photo-1584341534864-4bdb2eee6f4f?auto=format&fit=crop&q=80"],
-    isFeatured: true,
-    createdAt: new Date("2023-03-15"),
-  },
-  {
-    id: "crop-2",
-    sellerId: "seller-1",
-    name: "Fresh Tomatoes",
-    description: "Juicy, vine-ripened tomatoes picked at peak freshness.",
-    category: "Vegetable",
-    pricePerUnit: 2.99,
-    unit: "kg",
-    quantityAvailable: 75,
-    images: ["https://images.unsplash.com/photo-1546094096-0df4bcaad187?auto=format&fit=crop&q=80"],
-    isFeatured: false,
-    createdAt: new Date("2023-03-20"),
-  },
-  {
-    id: "crop-3",
-    sellerId: "seller-1",
-    name: "Sweet Corn",
-    description: "Non-GMO sweet corn, perfect for grilling or boiling.",
-    category: "Vegetable",
-    pricePerUnit: 0.75,
-    unit: "ear",
-    quantityAvailable: 126,
-    images: ["https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&q=80"],
-    isFeatured: false,
-    createdAt: new Date("2023-03-22"),
-  },
-  {
-    id: "crop-4",
-    sellerId: "seller-1",
-    name: "Soybeans",
-    description: "High-protein soybeans for processing or direct consumption.",
-    category: "Legume",
-    pricePerUnit: 28.50,
-    unit: "25kg",
-    quantityAvailable: 750,
-    images: ["https://images.unsplash.com/photo-1599422314077-f4dfdaa4cd09?auto=format&fit=crop&q=80"],
-    isFeatured: true,
-    createdAt: new Date("2023-03-25"),
-  },
-  {
-    id: "crop-5",
-    sellerId: "seller-1",
-    name: "Russet Potatoes",
-    description: "Versatile cooking potatoes, perfect for baking or mashing.",
-    category: "Vegetable",
-    pricePerUnit: 1.25,
-    unit: "kg",
-    quantityAvailable: 48,
-    images: ["https://images.unsplash.com/photo-1590165482129-1b8b27698780?auto=format&fit=crop&q=80"],
-    isFeatured: false,
-    createdAt: new Date("2023-03-28"),
-  }
-];
+import { formatTZS } from "@/utils/currency";
 
 const cropCategories = [
   "Grain",
@@ -159,12 +91,13 @@ const unitOptions = [
 
 const Inventory = () => {
   const { user } = useAuth();
-  const [crops, setCrops] = useState<Crop[]>(mockCrops);
+  const { crops, loading, addCrop, updateCrop, deleteCrop } = useSellerCrops();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [currentCrop, setCurrentCrop] = useState<Partial<Crop> | null>(null);
+  const [currentCrop, setCurrentCrop] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -177,57 +110,52 @@ const Inventory = () => {
   const filteredCrops = crops.filter((crop) => {
     const matchesSearch = crop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (crop.description && crop.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = filterCategory === "all" || crop.category === filterCategory;
+    const matchesCategory = filterCategory === "all" || crop.category_id === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
   const handleAddCrop = () => {
     setCurrentCrop({
-      sellerId: user?.id || "",
       name: "",
       description: "",
-      category: "",
-      pricePerUnit: 0,
+      price_per_unit: 0,
       unit: "kg",
-      quantityAvailable: 0,
-      images: [],
-      isFeatured: false,
-      createdAt: new Date()
+      quantity_available: 0,
+      is_organic: false,
+      is_featured: false,
+      is_active: true,
+      images: []
     });
     setIsEditMode(false);
     setShowAddEditModal(true);
   };
 
-  const handleEditCrop = (crop: Crop) => {
+  const handleEditCrop = (crop: any) => {
     setCurrentCrop(crop);
     setIsEditMode(true);
     setShowAddEditModal(true);
   };
 
-  const handleDeleteCrop = (cropId: string) => {
-    setCrops(crops.filter(crop => crop.id !== cropId));
+  const handleDeleteCrop = async (cropId: string) => {
+    await deleteCrop(cropId);
   };
 
-  const handleSaveCrop = () => {
-    if (!currentCrop) return;
+  const handleSaveCrop = async () => {
+    if (!currentCrop || !currentCrop.name) return;
 
-    if (isEditMode && currentCrop.id) {
-      // Update existing crop
-      setCrops(crops.map(crop => 
-        crop.id === currentCrop.id ? { ...crop, ...currentCrop } as Crop : crop
-      ));
-    } else {
-      // Add new crop
-      const newCrop: Crop = {
-        ...currentCrop as Crop,
-        id: `crop-${Date.now()}`,
-        createdAt: new Date()
-      };
-      setCrops([...crops, newCrop]);
+    setSaving(true);
+    try {
+      if (isEditMode && currentCrop.id) {
+        await updateCrop(currentCrop.id, currentCrop);
+      } else {
+        await addCrop(currentCrop);
+      }
+      
+      setShowAddEditModal(false);
+      setCurrentCrop(null);
+    } finally {
+      setSaving(false);
     }
-    
-    setShowAddEditModal(false);
-    setCurrentCrop(null);
   };
 
   const getStockStatusBadge = (quantity: number) => {
@@ -297,10 +225,18 @@ const Inventory = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCrops.length === 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Loading inventory...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredCrops.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No crops found. Add a new crop to get started.
+                        <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No crops found</p>
+                        <p className="text-sm">Add crops to your inventory to start selling</p>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -320,7 +256,7 @@ const Inventory = () => {
                             <div>
                               <div className="font-medium flex items-center">
                                 {crop.name}
-                                {crop.isFeatured && (
+                                {crop.is_featured && (
                                   <Star className="h-4 w-4 ml-1 text-amber-500 fill-amber-500" />
                                 )}
                               </div>
@@ -330,15 +266,15 @@ const Inventory = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{crop.category}</TableCell>
+                        <TableCell>{crop.category_id || "Uncategorized"}</TableCell>
                         <TableCell>
-                          ${crop.pricePerUnit.toFixed(2)}/{crop.unit}
+                          {formatTZS(crop.price_per_unit)}/{crop.unit}
                         </TableCell>
                         <TableCell>
-                          {crop.quantityAvailable} {crop.unit}
+                          {crop.quantity_available} {crop.unit}
                         </TableCell>
                         <TableCell>
-                          {getStockStatusBadge(crop.quantityAvailable)}
+                          {getStockStatusBadge(crop.quantity_available)}
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -358,8 +294,8 @@ const Inventory = () => {
                                 Delete
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem>
-                                {crop.isFeatured ? (
+                              <DropdownMenuItem onClick={() => updateCrop(crop.id, { is_featured: !crop.is_featured })}>
+                                {crop.is_featured ? (
                                   <>
                                     <Star className="h-4 w-4 mr-2 fill-current" />
                                     Remove Feature
@@ -407,20 +343,20 @@ const Inventory = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="unit">Unit</Label>
                   <Select
-                    value={currentCrop?.category || ""}
+                    value={currentCrop?.unit || "kg"}
                     onValueChange={(value) =>
-                      setCurrentCrop({ ...currentCrop, category: value })
+                      setCurrentCrop({ ...currentCrop, unit: value })
                     }
                   >
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
+                    <SelectTrigger id="unit">
+                      <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      {cropCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                      {unitOptions.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {unit}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -443,18 +379,18 @@ const Inventory = () => {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
+                  <Label htmlFor="price">Price per {currentCrop?.unit || 'unit'}</Label>
                   <Input
                     id="price"
                     type="number"
                     min="0"
                     step="0.01"
                     placeholder="0.00"
-                    value={currentCrop?.pricePerUnit || ""}
+                    value={currentCrop?.price_per_unit || ""}
                     onChange={(e) =>
                       setCurrentCrop({
                         ...currentCrop,
-                        pricePerUnit: parseFloat(e.target.value) || 0,
+                        price_per_unit: parseFloat(e.target.value) || 0,
                       })
                     }
                   />
@@ -487,48 +423,47 @@ const Inventory = () => {
                     min="0"
                     step="1"
                     placeholder="0"
-                    value={currentCrop?.quantityAvailable || ""}
+                    value={currentCrop?.quantity_available || ""}
                     onChange={(e) =>
                       setCurrentCrop({
                         ...currentCrop,
-                        quantityAvailable: parseInt(e.target.value) || 0,
+                        quantity_available: parseInt(e.target.value) || 0,
                       })
                     }
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="images">Images</Label>
-                <div className="flex items-center">
-                  <Button variant="outline" className="mr-2">
-                    <FileImage className="h-4 w-4 mr-2" />
-                    Upload Images
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {currentCrop?.images?.length
-                      ? `${currentCrop.images.length} image(s) uploaded`
-                      : "No images uploaded"}
-                  </span>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="organic"
+                    checked={currentCrop?.is_organic || false}
+                    onCheckedChange={(checked) =>
+                      setCurrentCrop({ ...currentCrop, is_organic: checked })
+                    }
+                  />
+                  <Label htmlFor="organic">Organic</Label>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-2">
-                <Switch
-                  id="featured"
-                  checked={currentCrop?.isFeatured || false}
-                  onCheckedChange={(checked) =>
-                    setCurrentCrop({ ...currentCrop, isFeatured: checked })
-                  }
-                />
-                <Label htmlFor="featured">Feature this crop (premium visibility)</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="featured"
+                    checked={currentCrop?.is_featured || false}
+                    onCheckedChange={(checked) =>
+                      setCurrentCrop({ ...currentCrop, is_featured: checked })
+                    }
+                  />
+                  <Label htmlFor="featured">Featured</Label>
+                </div>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowAddEditModal(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveCrop}>Save Crop</Button>
+              <Button onClick={handleSaveCrop} disabled={saving}>
+                {saving ? "Saving..." : (isEditMode ? "Update Crop" : "Add Crop")}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

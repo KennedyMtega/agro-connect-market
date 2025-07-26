@@ -96,7 +96,8 @@ const SellerBusinessSetup = () => {
         description: "Your business information has been saved successfully. You can now start selling!",
       });
 
-      navigate('/seller-dashboard');
+      // Route to inventory page to add first crops
+      navigate('/inventory');
     } catch (error) {
       console.error('Business setup error:', error);
       toast({
