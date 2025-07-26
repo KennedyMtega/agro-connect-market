@@ -94,7 +94,7 @@ const App = () => (
               <Route 
                 path="/search" 
                 element={
-                  <ProtectedRoute requiredUserType="buyer">
+                  <ProtectedRoute>
                     <Search />
                   </ProtectedRoute>
                 } 
@@ -118,7 +118,7 @@ const App = () => (
               <Route 
                 path="/cart" 
                 element={
-                  <ProtectedRoute requiredUserType="buyer">
+                  <ProtectedRoute>
                     <Cart />
                   </ProtectedRoute>
                 } 
