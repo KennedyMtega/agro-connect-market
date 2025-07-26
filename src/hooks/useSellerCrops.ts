@@ -24,18 +24,18 @@ export const useSellerCrops = () => {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, sellerProfile } = useAuth();
   const { toast } = useToast();
 
   const fetchCrops = async () => {
-    if (!user) return;
+    if (!user || !sellerProfile) return;
     
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('crops')
         .select('*')
-        .eq('seller_id', user.id)
+        .eq('seller_id', sellerProfile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -49,12 +49,20 @@ export const useSellerCrops = () => {
   };
 
   const addCrop = async (cropData: Omit<Crop, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!user) return false;
+    if (!user || !sellerProfile) return false;
 
     try {
+      // Add seller location to crop data so it appears on map
+      const cropWithLocation = {
+        ...cropData,
+        seller_id: sellerProfile.id,
+        location_lat: sellerProfile.store_location_lat,
+        location_lng: sellerProfile.store_location_lng
+      };
+
       const { data, error } = await supabase
         .from('crops')
-        .insert([{ ...cropData, seller_id: user.id }])
+        .insert([cropWithLocation])
         .select()
         .single();
 
@@ -63,7 +71,7 @@ export const useSellerCrops = () => {
       setCrops(prev => [data, ...prev]);
       toast({
         title: "Crop Added",
-        description: "Your crop has been added successfully.",
+        description: "Your crop has been added successfully and is now live on the marketplace.",
       });
       return true;
     } catch (err) {
@@ -133,7 +141,7 @@ export const useSellerCrops = () => {
 
   useEffect(() => {
     fetchCrops();
-  }, [user]);
+  }, [user, sellerProfile]);
 
   return {
     crops,

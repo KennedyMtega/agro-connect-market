@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSellerCrops } from "@/hooks/useSellerCrops";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import {
   Table,
@@ -61,20 +62,9 @@ import {
 } from "lucide-react";
 import { formatTZS } from "@/utils/currency";
 
-const cropCategories = [
-  "Grain",
-  "Vegetable",
-  "Fruit",
-  "Legume",
-  "Root",
-  "Nut",
-  "Seed",
-  "Other"
-];
-
 const unitOptions = [
   "kg",
-  "g",
+  "g", 
   "lb",
   "oz",
   "ton",
@@ -92,12 +82,25 @@ const unitOptions = [
 const Inventory = () => {
   const { user } = useAuth();
   const { crops, loading, addCrop, updateCrop, deleteCrop } = useSellerCrops();
+  const [categories, setCategories] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [currentCrop, setCurrentCrop] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from('crop_categories')
+        .select('*')
+        .order('name');
+      setCategories(data || []);
+    };
+    fetchCategories();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -114,6 +117,12 @@ const Inventory = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const getCategoryName = (categoryId: string | undefined) => {
+    if (!categoryId) return "Uncategorized";
+    const category = categories.find(cat => cat.id === categoryId);
+    return category?.name || "Unknown";
+  };
+
   const handleAddCrop = () => {
     setCurrentCrop({
       name: "",
@@ -121,6 +130,7 @@ const Inventory = () => {
       price_per_unit: 0,
       unit: "kg",
       quantity_available: 0,
+      category_id: "",
       is_organic: false,
       is_featured: false,
       is_active: true,
@@ -203,9 +213,9 @@ const Inventory = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {cropCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -266,7 +276,7 @@ const Inventory = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{crop.category_id || "Uncategorized"}</TableCell>
+                        <TableCell>{getCategoryName(crop.category_id)}</TableCell>
                         <TableCell>
                           {formatTZS(crop.price_per_unit)}/{crop.unit}
                         </TableCell>
@@ -364,17 +374,39 @@ const Inventory = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter crop description"
-                  value={currentCrop?.description || ""}
-                  onChange={(e) =>
-                    setCurrentCrop({ ...currentCrop, description: e.target.value })
-                  }
-                  rows={3}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={currentCrop?.category_id || ""}
+                    onValueChange={(value) =>
+                      setCurrentCrop({ ...currentCrop, category_id: value })
+                    }
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Enter crop description"
+                    value={currentCrop?.description || ""}
+                    onChange={(e) =>
+                      setCurrentCrop({ ...currentCrop, description: e.target.value })
+                    }
+                    rows={3}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
