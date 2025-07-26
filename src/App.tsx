@@ -8,9 +8,7 @@ import { AuthProvider } from "@/context/auth/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { CartProvider } from "@/context/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import HomePage from "./pages/HomePage";
-import UserLanding from "./pages/UserLanding";
-import FarmerLanding from "./pages/FarmerLanding";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import SellerDashboard from "./pages/SellerDashboard";
@@ -35,7 +33,7 @@ const AuthenticatedRedirect = () => {
   
   // If user is not logged in, show landing page
   if (!user) {
-    return <HomePage />;
+    return <Landing />;
   }
   
   // If user is logged in but not onboarded, redirect to onboarding
@@ -73,9 +71,6 @@ const App = () => (
               {/* Root redirects based on auth status */}
               <Route path="/" element={<AuthenticatedRedirect />} />
               
-              {/* Landing pages */}
-              <Route path="/user" element={<UserLanding />} />
-              <Route path="/farmer" element={<FarmerLanding />} />
               
               {/* Onboarding */}
               <Route path="/user-onboarding" element={<UserOnboarding />} />
