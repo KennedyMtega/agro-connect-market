@@ -11,12 +11,14 @@ import { MapPin, Phone, Mail, Calendar, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import EmailNotification from "@/components/profile/EmailNotification";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { user, profile, sellerProfile, updateProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: profile?.full_name || "",
@@ -42,25 +44,77 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await updateProfile({
-        full_name: formData.fullName,
-        phone_number: formData.phoneNumber,
-        address: formData.address,
-        city: formData.city,
-        region: formData.region
-      });
+      setIsUpdatingEmail(true);
       
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
+      // Check if email has changed
+      const emailChanged = formData.email !== user?.email;
+      
+      if (emailChanged) {
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          toast({
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Update the user's email in auth
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: formData.email,
+        });
+
+        if (emailError) {
+          toast({
+            title: "Error",
+            description: emailError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update profile with new email
+        await updateProfile({
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          address: formData.address,
+          city: formData.city,
+          region: formData.region,
+          email: formData.email,
+        });
+
+        toast({
+          title: "Profile updated",
+          description: "Your profile and email have been updated successfully. Please check your inbox for email verification.",
+        });
+      } else {
+        // Update profile without email change
+        await updateProfile({
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          address: formData.address,
+          city: formData.city,
+          region: formData.region
+        });
+        
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        });
+      }
+      
       setIsEditing(false);
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsUpdatingEmail(false);
     }
   };
 
@@ -163,7 +217,9 @@ const Profile = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    disabled
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={!isEditing}
+                    placeholder="your.email@example.com"
                   />
                 </div>
                 <div className="space-y-2">
@@ -206,10 +262,17 @@ const Profile = () => {
 
               {isEditing && (
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={handleSaveProfile}>
-                    Save Changes
+                  <Button 
+                    onClick={handleSaveProfile}
+                    disabled={isUpdatingEmail}
+                  >
+                    {isUpdatingEmail ? "Updating..." : "Save Changes"}
                   </Button>
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditing(false)}
+                    disabled={isUpdatingEmail}
+                  >
                     Cancel
                   </Button>
                 </div>
