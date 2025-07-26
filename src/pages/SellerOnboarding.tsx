@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Leaf, ArrowLeft, ArrowRight } from "lucide-react";
+import { validateTzPhone, formatTzPhone, getTzPhoneError } from "@/utils/phoneValidation";
 
 const SellerOnboarding = () => {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ const SellerOnboarding = () => {
 
   const handlePersonalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!personalData.fullName || !personalData.phoneNumber) {
       toast({
         title: "Missing Information",
@@ -43,6 +46,18 @@ const SellerOnboarding = () => {
       });
       return;
     }
+
+    // Validate phone number
+    const phoneError = getTzPhoneError(personalData.phoneNumber);
+    if (phoneError) {
+      toast({
+        title: "Invalid Phone Number",
+        description: phoneError,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCurrentStep(2);
   };
 
@@ -62,16 +77,20 @@ const SellerOnboarding = () => {
       // Get user's email from Supabase auth
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Format phone number properly
+      const formattedPhone = formatTzPhone(personalData.phoneNumber);
+      
       // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: personalData.fullName,
-          phone_number: personalData.phoneNumber,
+          phone_number: formattedPhone,
           address: personalData.address,
           city: personalData.city,
           region: personalData.region,
           email: user?.email, // Ensure email is stored
+          is_onboarded: true,
         })
         .eq('id', user?.id);
 
@@ -178,7 +197,7 @@ const SellerOnboarding = () => {
                       id="phoneNumber"
                       value={personalData.phoneNumber}
                       onChange={(e) => setPersonalData({...personalData, phoneNumber: e.target.value})}
-                      placeholder="+255 XXX XXX XXX"
+                      placeholder="+255 XXX XXX XXX or 0XXX XXX XXX"
                       required
                     />
                   </div>

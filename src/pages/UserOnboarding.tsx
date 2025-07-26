@@ -8,6 +8,7 @@ import { MapPin, User, Phone, Mail, ArrowRight, Leaf } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { validateTzPhone, formatTzPhone, getTzPhoneError } from "@/utils/phoneValidation";
 
 const UserOnboarding = () => {
   const navigate = useNavigate();
@@ -28,13 +29,29 @@ const UserOnboarding = () => {
   const handleComplete = async () => {
     if (!user) return;
     
+    // Validate required fields
+    if (!formData.fullName || !formData.phoneNumber) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    // Validate phone number
+    const phoneError = getTzPhoneError(formData.phoneNumber);
+    if (phoneError) {
+      toast.error(phoneError);
+      return;
+    }
+    
     setIsLoading(true);
     try {
+      // Format phone number properly
+      const formattedPhone = formatTzPhone(formData.phoneNumber);
+      
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: formData.fullName,
-          phone_number: formData.phoneNumber,
+          phone_number: formattedPhone,
           is_onboarded: true
         })
         .eq('id', user.id);
@@ -106,7 +123,7 @@ const UserOnboarding = () => {
               </Label>
               <Input
                 id="phoneNumber"
-                placeholder="+255 XXX XXX XXX"
+                placeholder="+255 XXX XXX XXX or 0XXX XXX XXX"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                 className="border-blue-200 focus:border-blue-400"
