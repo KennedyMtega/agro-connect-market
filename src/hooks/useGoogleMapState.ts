@@ -50,7 +50,9 @@ export const useGoogleMapState = () => {
   }, []);
 
   const handleSearch = useCallback(async (query: string) => {
+    console.log('handleSearch called with query:', query);
     if (!query.trim()) {
+      console.log('Empty query, resetting to default sellers');
       setShowResults(false);
       // Reset to all real sellers
       if (realSellers.length > 0) {
@@ -81,10 +83,13 @@ export const useGoogleMapState = () => {
     setSearchQuery(query);
     setIsSearching(true);
     setShowResults(true);
+    console.log('Search state updated, starting global search...');
 
     try {
+      console.log('Starting search for:', query);
       // Search globally across all crops in the database
       const searchResults = await searchCropsGlobally(query);
+      console.log('Search results received:', searchResults.length, 'sellers');
       
       // Transform search results to vendors
       const searchVendors = searchResults.map(seller => ({
@@ -108,6 +113,7 @@ export const useGoogleMapState = () => {
         online: seller.online || true
       }));
 
+      console.log('Transformed search vendors:', searchVendors.length);
       setVendors(searchVendors);
       setShowResults(true);
       
@@ -117,6 +123,7 @@ export const useGoogleMapState = () => {
           description: `Found ${searchVendors.length} sellers with "${query}"`,
         });
       } else {
+        console.log('No vendors found, showing no results message');
         toast({
           title: "No Results",
           description: `No sellers found for "${query}". Try different keywords.`,

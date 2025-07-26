@@ -114,6 +114,14 @@ export const useGlobalCropSearch = () => {
       }));
 
       console.log(`Search for "${query}" found ${transformedSellers.length} sellers`);
+      
+      // Add detailed logging for debugging
+      if (transformedSellers.length === 0) {
+        console.log('No sellers found. Query used:', query);
+        console.log('Business matches:', businessMatches?.length || 0);
+        console.log('Crop matches:', cropMatches?.length || 0);
+      }
+      
       return transformedSellers;
     } catch (error: any) {
       console.error('Error searching crops:', error);
