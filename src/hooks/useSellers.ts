@@ -46,64 +46,69 @@ export const useSellers = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch verified sellers with their crops and profiles
-      const { data: sellersData, error: sellersError } = await supabase
-        .from('seller_profiles')
+      // Fetch verified sellers (public-safe RPC)
+      const { data: sellersData, error: sellersError } = await (supabase as any)
+        .rpc('get_verified_sellers_public');
+
+      if (sellersError) {
+        throw sellersError;
+      }
+
+      const sellersList: any[] = (sellersData as any[]) || [];
+      const sellerIds = sellersList.map((s: any) => s.id);
+
+      // Fetch active crops for these sellers
+      const { data: cropsData, error: cropsError } = await supabase
+        .from('crops')
         .select(`
-          *,
-          profiles!seller_profiles_user_id_fkey (
-            full_name,
-            city
-          ),
-          crops (
-            id,
-            name,
-            description,
-            price_per_unit,
-            unit,
-            quantity_available,
-            is_organic,
-            is_active,
-            crop_categories (
-              name
-            )
-          )
+          id,
+          name,
+          description,
+          price_per_unit,
+          unit,
+          quantity_available,
+          is_organic,
+          is_active,
+          seller_id,
+          crop_categories ( name )
         `)
-        .eq('verification_status', 'verified')
-        .not('store_location_lat', 'is', null)
-        .not('store_location_lng', 'is', null);
+        .eq('is_active', true)
+        .in('seller_id', sellerIds);
+
+      if (cropsError) {
+        throw cropsError;
+      }
+
+      const cropsBySeller: Record<string, any[]> = {};
+      (cropsData || []).forEach((c: any) => {
+        if (!cropsBySeller[c.seller_id]) cropsBySeller[c.seller_id] = [];
+        cropsBySeller[c.seller_id].push(c);
+      });
 
       if (sellersError) {
         throw sellersError;
       }
 
       // Transform the data to match our interface
-      const transformedSellers: Seller[] = (sellersData || []).map(seller => ({
+      const transformedSellers: Seller[] = sellersList.map((seller: any) => ({
         id: seller.id,
         business_name: seller.business_name,
         business_description: seller.business_description || '',
-        average_rating: seller.average_rating || 0,
+        average_rating: Number(seller.average_rating || 0),
         delivery_radius_km: seller.delivery_radius_km || 10,
         verification_status: seller.verification_status || 'pending',
         user_id: seller.user_id,
-        crops: (seller.crops || [])
-          .filter((crop: any) => crop.is_active) // Filter active crops only
-          .map((crop: any) => ({
-            id: crop.id,
-            name: crop.name,
-            description: crop.description || '',
-            price_per_unit: crop.price_per_unit,
-            unit: crop.unit,
-            quantity_available: crop.quantity_available,
-            is_organic: crop.is_organic || false,
-            category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
-          })),
-        profile: seller.profiles ? {
-          full_name: seller.profiles.full_name,
-          location_lat: seller.store_location_lat,
-          location_lng: seller.store_location_lng,
-          city: seller.profiles.city,
-        } : undefined,
+        crops: (cropsBySeller[seller.id] || []).map((crop: any) => ({
+          id: crop.id,
+          name: crop.name,
+          description: crop.description || '',
+          price_per_unit: crop.price_per_unit,
+          unit: crop.unit,
+          quantity_available: crop.quantity_available,
+          is_organic: crop.is_organic || false,
+          category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
+        })),
+        profile: undefined,
         // Add default values for UI
         distance: Math.floor(Math.random() * 10) + 1, // TODO: Calculate actual distance
         estimatedDelivery: "30-45 min", // TODO: Calculate based on distance

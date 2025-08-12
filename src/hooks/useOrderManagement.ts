@@ -34,20 +34,31 @@ export const useOrderManagement = (
           order_items(
             *,
             crops(name, unit)
-          ),
-          seller_profiles(business_name)
+          )
         `)
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
+      // Safely fetch seller names via RPC
+      const sellerIds = Array.from(new Set((data || []).map((o: any) => o.seller_id).filter(Boolean)));
+      let sellerNameMap: Record<string, string> = {};
+      if (sellerIds.length > 0) {
+        const { data: sellersByIds, error: idsError } = await (supabase as any)
+          .rpc('get_verified_sellers_by_ids', { _ids: sellerIds });
+        if (idsError) throw idsError;
+        (sellersByIds as any[]).forEach((s: any) => {
+          sellerNameMap[s.id] = s.business_name;
+        });
+      }
+
       // Transform database orders to our Order type
       const transformedOrders: Order[] = (data || []).map(order => ({
         id: order.id,
         buyerId: order.buyer_id,
         sellerId: order.seller_id,
-        sellerName: order.seller_profiles?.business_name || 'Unknown Seller',
+        sellerName: sellerNameMap[order.seller_id] || 'Unknown Seller',
         items: (order.order_items || []).map((item: any) => ({
           id: item.id,
           cropId: item.crop_id,

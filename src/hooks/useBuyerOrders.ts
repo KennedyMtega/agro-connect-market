@@ -53,14 +53,31 @@ export const useBuyerOrders = () => {
           order_items(
             *,
             crops(name, unit)
-          ),
-          seller_profiles(business_name)
+          )
         `)
         .eq('buyer_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+
+      // Fetch seller names safely via RPC
+      const sellerIds = Array.from(new Set((data || []).map((o: any) => o.seller_id).filter(Boolean)));
+      let sellerNameMap: Record<string, string> = {};
+      if (sellerIds.length > 0) {
+        const { data: sellersByIds, error: idsError } = await (supabase as any)
+          .rpc('get_verified_sellers_by_ids', { _ids: sellerIds });
+        if (idsError) throw idsError;
+        (sellersByIds as any[]).forEach((s: any) => {
+          sellerNameMap[s.id] = s.business_name;
+        });
+      }
+
+      const ordersWithSellerName = (data || []).map((order: any) => ({
+        ...order,
+        seller_profiles: { business_name: sellerNameMap[order.seller_id] || 'Unknown Seller' }
+      }));
+
+      setOrders(ordersWithSellerName || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError('Failed to load orders');

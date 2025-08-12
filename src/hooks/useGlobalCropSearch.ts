@@ -15,111 +15,104 @@ export const useGlobalCropSearch = () => {
     try {
       setIsSearching(true);
 
-      // First search for sellers by business name/description
-      const { data: businessMatches, error: businessError } = await supabase
-        .from('seller_profiles')
-        .select(`
-          *,
-          profiles!seller_profiles_user_id_fkey (
-            full_name,
-            city
-          ),
-          crops (
-            id,
-            name,
-            description,
-            price_per_unit,
-            unit,
-            quantity_available,
-            is_organic,
-            is_active,
-            crop_categories (
-              name
-            )
-          )
-        `)
-        .eq('verification_status', 'verified')
-        .or(`business_name.ilike.%${query}%,business_description.ilike.%${query}%`)
-        .not('store_location_lat', 'is', null)
-        .not('store_location_lng', 'is', null);
-
-      // Then search for sellers that have crops matching the query
-      const { data: cropMatches, error: cropError } = await supabase
-        .from('seller_profiles')
-        .select(`
-          *,
-          profiles!seller_profiles_user_id_fkey (
-            full_name,
-            city
-          ),
-          crops!inner (
-            id,
-            name,
-            description,
-            price_per_unit,
-            unit,
-            quantity_available,
-            is_organic,
-            is_active,
-            crop_categories (
-              name
-            )
-          )
-        `)
-        .eq('verification_status', 'verified')
-        .eq('crops.is_active', true)
-        .or(`crops.name.ilike.%${query}%,crops.description.ilike.%${query}%`)
-        .not('store_location_lat', 'is', null)
-        .not('store_location_lng', 'is', null);
+      // First search for sellers by business name/description (public-safe RPC)
+      const { data: businessMatches, error: businessError } = await (supabase as any)
+        .rpc('search_verified_sellers_public', { _query: query });
 
       if (businessError) throw businessError;
+
+      // Then search crops and map to their sellers
+      const { data: cropRows, error: cropError } = await supabase
+        .from('crops')
+        .select(`
+          id,
+          name,
+          description,
+          price_per_unit,
+          unit,
+          quantity_available,
+          is_organic,
+          is_active,
+          seller_id,
+          crop_categories ( name )
+        `)
+        .eq('is_active', true)
+        .or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+
       if (cropError) throw cropError;
 
-      // Combine and deduplicate results
-      const combinedResults = [...(businessMatches || []), ...(cropMatches || [])];
+      const sellerIdsFromCrops = Array.from(new Set((cropRows || []).map((c: any) => c.seller_id)));
+
+      let sellersFromCrops: any[] = [];
+      if (sellerIdsFromCrops.length > 0) {
+        const { data: sellersByIds, error: idsError } = await (supabase as any)
+          .rpc('get_verified_sellers_by_ids', { _ids: sellerIdsFromCrops });
+        if (idsError) throw idsError;
+        sellersFromCrops = (sellersByIds as any[]) || [];
+      }
+
+      // Combine and deduplicate seller results
+      const combinedResults: any[] = ([...(businessMatches as any[] || []), ...sellersFromCrops]);
       const uniqueResults = combinedResults.filter((seller, index, self) => 
-        index === self.findIndex(s => s.id === seller.id)
+        index === self.findIndex((s) => s.id === seller.id)
       );
 
+      // Fetch all active crops for the resulting sellers
+      const { data: allCrops, error: allCropsError } = await supabase
+        .from('crops')
+        .select(`
+          id,
+          name,
+          description,
+          price_per_unit,
+          unit,
+          quantity_available,
+          is_organic,
+          is_active,
+          seller_id,
+          crop_categories ( name )
+        `)
+        .eq('is_active', true)
+        .in('seller_id', uniqueResults.map((s: any) => s.id));
+
+      if (allCropsError) throw allCropsError;
+
+      const cropsBySeller: Record<string, any[]> = {};
+      (allCrops || []).forEach((c: any) => {
+        if (!cropsBySeller[c.seller_id]) cropsBySeller[c.seller_id] = [];
+        cropsBySeller[c.seller_id].push(c);
+      });
+
       // Transform the data to match our interface
-      const transformedSellers: Seller[] = (uniqueResults || []).map(seller => ({
+      const transformedSellers: Seller[] = (uniqueResults || []).map((seller: any) => ({
         id: seller.id,
         business_name: seller.business_name,
         business_description: seller.business_description || '',
-        average_rating: seller.average_rating || 0,
+        average_rating: Number(seller.average_rating || 0),
         delivery_radius_km: seller.delivery_radius_km || 10,
         verification_status: seller.verification_status || 'pending',
         user_id: seller.user_id,
-        crops: (seller.crops || [])
-          .filter((crop: any) => crop.is_active && crop.quantity_available > 0)
-          .map((crop: any) => ({
-            id: crop.id,
-            name: crop.name,
-            description: crop.description || '',
-            price_per_unit: crop.price_per_unit,
-            unit: crop.unit,
-            quantity_available: crop.quantity_available,
-            is_organic: crop.is_organic || false,
-            category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
-          })),
-        profile: seller.profiles ? {
-          full_name: seller.profiles.full_name,
-          location_lat: seller.store_location_lat,
-          location_lng: seller.store_location_lng,
-          city: seller.profiles.city,
-        } : undefined,
+        crops: (cropsBySeller[seller.id] || []).map((crop: any) => ({
+          id: crop.id,
+          name: crop.name,
+          description: crop.description || '',
+          price_per_unit: crop.price_per_unit,
+          unit: crop.unit,
+          quantity_available: crop.quantity_available,
+          is_organic: crop.is_organic || false,
+          category: crop.crop_categories ? { name: crop.crop_categories.name } : undefined,
+        })),
+        profile: undefined,
         distance: Math.floor(Math.random() * 50) + 1, // Global search can show farther distances
         estimatedDelivery: "45-60 min", // Longer delivery for global search
         online: Math.random() > 0.3,
       }));
 
       console.log(`Search for "${query}" found ${transformedSellers.length} sellers`);
-      
-      // Add detailed logging for debugging
       if (transformedSellers.length === 0) {
         console.log('No sellers found. Query used:', query);
-        console.log('Business matches:', businessMatches?.length || 0);
-        console.log('Crop matches:', cropMatches?.length || 0);
+        console.log('Business matches:', (businessMatches as any[])?.length || 0);
+        console.log('Crop seller IDs count:', sellerIdsFromCrops.length || 0);
       }
       
       return transformedSellers;
