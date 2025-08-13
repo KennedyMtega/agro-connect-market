@@ -482,52 +482,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_seller_business_name: {
-        Args: { _seller_id: string }
-        Returns: string
-      }
-      get_verified_sellers_by_ids: {
-        Args: { _ids: string[] }
-        Returns: {
-          id: string
-          user_id: string
-          business_name: string
-          business_description: string
-          average_rating: number
-          total_ratings: number
-          delivery_radius_km: number
-          verification_status: Database["public"]["Enums"]["verification_status"]
-          store_location_lat: number
-          store_location_lng: number
-          store_location: string
-          has_whatsapp: boolean
-        }[]
-      }
-      sanitize_business_input: {
-        Args: { input_text: string }
-        Returns: string
-      }
-      search_verified_sellers_public: {
-        Args: { _query: string }
-        Returns: {
-          id: string
-          user_id: string
-          business_name: string
-          business_description: string
-          average_rating: number
-          total_ratings: number
-          delivery_radius_km: number
-          verification_status: Database["public"]["Enums"]["verification_status"]
-          store_location_lat: number
-          store_location_lng: number
-          store_location: string
-          has_whatsapp: boolean
-        }[]
-      }
-      validate_email_server_side: {
-        Args: { email_input: string }
-        Returns: Json
-      }
       validate_tz_phone: {
         Args: { phone: string }
         Returns: boolean

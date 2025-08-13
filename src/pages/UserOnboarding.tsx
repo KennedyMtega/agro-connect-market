@@ -11,8 +11,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { validateTzPhone, formatTzPhone, getTzPhoneError } from "@/utils/phoneValidation";
-import { validateEmail, sanitizeEmailInput } from "@/utils/emailValidation";
-import { authRateLimit } from "@/utils/inputSanitization";
 
 const UserOnboarding = () => {
   const navigate = useNavigate();
@@ -52,33 +50,15 @@ const UserOnboarding = () => {
     setIsLoading(true);
 
     try {
-      // Rate limiting check
-      const clientId = 'signup-client'; // In production, use IP address
-      if (!authRateLimit(clientId)) {
-        toast.error("Too many signup attempts. Please wait a few minutes before trying again.");
-        return;
-      }
-
       // Validation
       if (!signUpData.fullName.trim()) {
         toast.error("Please enter your full name.");
         return;
       }
 
-      // Enhanced email validation
-      const sanitizedEmail = sanitizeEmailInput(signUpData.email);
-      const emailValidation = validateEmail(sanitizedEmail);
-      
-      if (!emailValidation.isValid) {
-        toast.error(emailValidation.error || "Please enter a valid email address.");
+      if (!signUpData.email.trim() || !signUpData.email.includes('@')) {
+        toast.error("Please enter a valid email address.");
         return;
-      }
-
-      // Show warnings for disposable emails
-      if (emailValidation.warnings) {
-        emailValidation.warnings.forEach(warning => {
-          toast.warning(warning);
-        });
       }
 
       const phoneError = getTzPhoneError(signUpData.phone);
@@ -87,14 +67,8 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Enhanced password validation
-      if (signUpData.password.length < 8) {
-        toast.error("Password must be at least 8 characters long.");
-        return;
-      }
-
-      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(signUpData.password)) {
-        toast.error("Password must contain at least one uppercase letter, one lowercase letter, and one number.");
+      if (signUpData.password.length < 6) {
+        toast.error("Password must be at least 6 characters long.");
         return;
       }
 
@@ -117,9 +91,9 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Use the sanitized email
+      // Use the real email provided by user
       const { error } = await supabase.auth.signUp({
-        email: sanitizedEmail,
+        email: signUpData.email.trim(),
         password: signUpData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -151,12 +125,6 @@ const UserOnboarding = () => {
     setIsLoading(true);
 
     try {
-      // Rate limiting check
-      const clientId = 'signin-client'; // In production, use IP address
-      if (!authRateLimit(clientId)) {
-        toast.error("Too many sign-in attempts. Please wait a few minutes before trying again.");
-        return;
-      }
       const phoneError = getTzPhoneError(signInData.phone);
       if (phoneError) {
         toast.error(phoneError);
@@ -369,10 +337,10 @@ const UserOnboarding = () => {
                    <div className="space-y-2">
                      <Label htmlFor="signup-password">Password</Label>
                      <div className="relative">
-                        <Input
-                          id="signup-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="At least 8 characters (uppercase, lowercase, number)"
+                       <Input
+                         id="signup-password"
+                         type={showPassword ? "text" : "password"}
+                         placeholder="At least 6 characters"
                          value={signUpData.password}
                          onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
                          required
