@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowLeft, X } from "lucide-react";
+import { sanitizeSearchQuery, searchRateLimit } from "@/utils/inputSanitization";
+import { toast } from "sonner";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -15,7 +17,22 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, inputRef }) => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query);
+    
+    // Rate limiting check
+    const clientId = 'search-client'; // In production, use user ID or IP
+    if (!searchRateLimit(clientId)) {
+      toast.error("Too many searches. Please wait a moment before searching again.");
+      return;
+    }
+    
+    // Sanitize and validate search query
+    const sanitizedQuery = sanitizeSearchQuery(query);
+    if (sanitizedQuery.length < 2) {
+      toast.error("Please enter at least 2 characters to search.");
+      return;
+    }
+    
+    onSearch(sanitizedQuery);
   };
   
   const handleClear = () => {
@@ -57,7 +74,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, inputRef }) => {
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => setQuery(sanitizeSearchQuery(e.target.value))}
           placeholder="Search for crops, businesses..."
           className="flex-1 border-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-2 pr-4 py-6"
           onFocus={() => setIsFocused(true)}

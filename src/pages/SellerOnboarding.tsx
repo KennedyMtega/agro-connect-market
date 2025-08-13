@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Leaf, ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { validateTzPhone, formatTzPhone, getTzPhoneError } from "@/utils/phoneValidation";
+import { validateEmail, sanitizeEmailInput } from "@/utils/emailValidation";
+import { authRateLimit, sanitizeTextInput } from "@/utils/inputSanitization";
 import EmailUpdate from "@/components/profile/EmailUpdate";
 
 const SellerOnboarding = () => {
@@ -53,6 +55,17 @@ const SellerOnboarding = () => {
     setLoading(true);
 
     try {
+      // Rate limiting check
+      const clientId = 'seller-signup-client';
+      if (!authRateLimit(clientId)) {
+        toast({
+          title: "Too Many Attempts",
+          description: "Please wait a few minutes before trying again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Validation
       if (!signUpData.fullName.trim()) {
         toast({
@@ -63,10 +76,14 @@ const SellerOnboarding = () => {
         return;
       }
 
-      if (!signUpData.email.trim() || !signUpData.email.includes('@')) {
+      // Enhanced email validation
+      const sanitizedEmail = sanitizeEmailInput(signUpData.email);
+      const emailValidation = validateEmail(sanitizedEmail);
+      
+      if (!emailValidation.isValid) {
         toast({
-          title: "Email Required",
-          description: "Please enter a valid email address.",
+          title: "Invalid Email",
+          description: emailValidation.error || "Please enter a valid email address.",
           variant: "destructive",
         });
         return;
@@ -82,10 +99,20 @@ const SellerOnboarding = () => {
         return;
       }
 
-      if (signUpData.password.length < 6) {
+      // Enhanced password validation
+      if (signUpData.password.length < 8) {
         toast({
           title: "Password Too Short",
-          description: "Password must be at least 6 characters long.",
+          description: "Password must be at least 8 characters long.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(signUpData.password)) {
+        toast({
+          title: "Password Too Weak",
+          description: "Password must contain uppercase, lowercase, and a number.",
           variant: "destructive",
         });
         return;
@@ -118,9 +145,9 @@ const SellerOnboarding = () => {
         return;
       }
 
-      // Use the real email provided by user
+      // Use the sanitized email
       const { error } = await supabase.auth.signUp({
-        email: signUpData.email.trim(),
+        email: sanitizedEmail,
         password: signUpData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -247,7 +274,12 @@ const SellerOnboarding = () => {
 
   const handleBusinessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessData.businessName || !businessData.businessDescription) {
+    
+    // Sanitize business inputs
+    const sanitizedBusinessName = sanitizeTextInput(businessData.businessName, 100);
+    const sanitizedBusinessDescription = sanitizeTextInput(businessData.businessDescription, 500);
+    
+    if (!sanitizedBusinessName || !sanitizedBusinessDescription) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required business fields.",
@@ -271,14 +303,14 @@ const SellerOnboarding = () => {
 
       if (profileError) throw profileError;
 
-      // Create seller profile
+      // Create seller profile with sanitized data
       const { error: sellerError } = await supabase
         .from('seller_profiles')
         .insert({
           user_id: user?.id,
-          business_name: businessData.businessName,
-          business_description: businessData.businessDescription,
-          business_license: businessData.businessLicense,
+          business_name: sanitizedBusinessName,
+          business_description: sanitizedBusinessDescription,
+          business_license: sanitizeTextInput(businessData.businessLicense, 100),
           delivery_radius_km: businessData.deliveryRadius,
         });
 

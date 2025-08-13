@@ -482,6 +482,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_seller_business_name: {
+        Args: { _seller_id: string }
+        Returns: string
+      }
       get_verified_sellers_by_ids: {
         Args: { _ids: string[] }
         Returns: {

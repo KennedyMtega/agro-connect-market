@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Crop } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { validatePositiveNumber } from '@/utils/inputSanitization';
 
 export interface CartItem {
   crop: Crop;
@@ -33,6 +34,16 @@ export const useCartStore = () => {
   }, [items]);
 
   const addToCart = useCallback((crop: Crop, quantity: number) => {
+    // Validate quantity input
+    if (!validatePositiveNumber(quantity, crop.quantityAvailable)) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please enter a valid positive number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (quantity > crop.quantityAvailable) {
       toast({
         title: "Quantity Limit Exceeded",
@@ -82,6 +93,16 @@ export const useCartStore = () => {
   }, [toast]);
 
   const updateQuantity = useCallback((cropId:string, quantity: number) => {
+    // Validate quantity input
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please enter a valid whole number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (quantity <= 0) {
       removeFromCart(cropId);
       return;
