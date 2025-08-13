@@ -503,6 +503,10 @@ export type Database = {
           has_whatsapp: boolean
         }[]
       }
+      sanitize_business_input: {
+        Args: { input_text: string }
+        Returns: string
+      }
       search_verified_sellers_public: {
         Args: { _query: string }
         Returns: {
@@ -519,6 +523,10 @@ export type Database = {
           store_location: string
           has_whatsapp: boolean
         }[]
+      }
+      validate_email_server_side: {
+        Args: { email_input: string }
+        Returns: Json
       }
       validate_tz_phone: {
         Args: { phone: string }
