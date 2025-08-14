@@ -111,7 +111,8 @@ const UserOnboarding = () => {
       }
 
       toast.success("Account created successfully! Welcome to AgroConnect!");
-      // User will be redirected by AuthenticatedRedirect component
+      // Navigate to profile completion immediately after sign-up
+      navigate("/user-onboarding");
     } catch (error) {
       console.error('Sign up error:', error);
       toast.error("An unexpected error occurred. Please try again.");
@@ -168,7 +169,18 @@ const UserOnboarding = () => {
       }
 
       toast.success("Welcome back!");
-      // User will be redirected by AuthenticatedRedirect component
+      // Check if user is onboarded and route accordingly
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('is_onboarded')
+        .eq('id', profileData.id)
+        .single();
+      
+      if (currentProfile?.is_onboarded) {
+        navigate("/search");
+      } else {
+        navigate("/user-onboarding");
+      }
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error("An unexpected error occurred. Please try again.");
