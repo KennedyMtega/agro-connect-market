@@ -482,6 +482,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_geocode_data: {
+        Args: { lat: number; lng: number }
+        Returns: Json
+      }
       get_seller_business_name: {
         Args: { _seller_id: string }
         Returns: string

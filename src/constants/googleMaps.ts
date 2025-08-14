@@ -14,5 +14,6 @@ export const MAP_STYLES = [
   }
 ];
 
-// Updated with the provided API key
-export const GOOGLE_MAPS_API_KEY = "AIzaSyBcM1zQVcAZ3BzX0ygQhX9R2bbooON6xDk";
+// API key moved to secure Supabase edge function
+// Frontend components should use the secure geocoding API instead of direct Google Maps API calls
+export const GOOGLE_MAPS_API_KEY = ""; // Removed for security - use edge function instead

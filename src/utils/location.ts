@@ -80,15 +80,9 @@ export const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
 
 export const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
   try {
-    // Use Google Maps Geocoding API
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
-    );
-    const data = await response.json();
-    
-    if (data.results && data.results.length > 0) {
-      return data.results[0].formatted_address;
-    }
+    // Use secure Supabase edge function instead of direct API call
+    const { secureReverseGeocode } = await import('@/utils/secureGeocoding');
+    return await secureReverseGeocode(lat, lng);
   } catch (error) {
     console.error('Reverse geocoding error:', error);
   }
