@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -482,6 +482,69 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_seller_business_name: {
+        Args: { _seller_id: string }
+        Returns: string
+      }
+      get_verified_sellers_by_ids: {
+        Args: { _ids: string[] }
+        Returns: {
+          average_rating: number
+          business_description: string
+          business_name: string
+          delivery_radius_km: number
+          has_whatsapp: boolean
+          id: string
+          store_location: string
+          store_location_lat: number
+          store_location_lng: number
+          total_ratings: number
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
+      get_verified_sellers_public: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          average_rating: number
+          business_description: string
+          business_name: string
+          delivery_radius_km: number
+          has_whatsapp: boolean
+          id: string
+          store_location: string
+          store_location_lat: number
+          store_location_lng: number
+          total_ratings: number
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
+      sanitize_business_input: {
+        Args: { input_text: string }
+        Returns: string
+      }
+      search_verified_sellers_public: {
+        Args: { _query: string }
+        Returns: {
+          average_rating: number
+          business_description: string
+          business_name: string
+          delivery_radius_km: number
+          has_whatsapp: boolean
+          id: string
+          store_location: string
+          store_location_lat: number
+          store_location_lng: number
+          total_ratings: number
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
+      validate_email_server_side: {
+        Args: { email_input: string }
+        Returns: Json
+      }
       validate_tz_phone: {
         Args: { phone: string }
         Returns: boolean
