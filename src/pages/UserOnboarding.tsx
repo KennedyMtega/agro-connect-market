@@ -91,16 +91,17 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Use the real email provided by user
-      const { error } = await supabase.auth.signUp({
+      // Use the real email provided by user for auth, but also store for profile
+      const { data, error } = await supabase.auth.signUp({
         email: signUpData.email.trim(),
         password: signUpData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/user-onboarding`,
           data: {
             phone_number: formattedPhone,
             full_name: signUpData.fullName,
             user_type: 'buyer',
+            email: signUpData.email.trim(), // Store email in metadata for profile
           },
         },
       });
@@ -151,15 +152,14 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Try signing in with the user's actual email first, then fallback to temp email
-      let signInEmail = profileData.email;
-      if (!signInEmail || signInEmail.includes('@temp.local')) {
-        // Use temp email format for existing accounts
-        signInEmail = `${formattedPhone.replace('+', '')}@temp.local`;
+      // Sign in with the user's email (all accounts should have real emails)
+      if (!profileData.email) {
+        toast.error("Account email not found. Please contact support.");
+        return;
       }
       
       const { error } = await supabase.auth.signInWithPassword({
-        email: signInEmail,
+        email: profileData.email,
         password: signInData.password,
       });
 
