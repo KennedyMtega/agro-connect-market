@@ -19,7 +19,7 @@ import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import SellerOrders from "./pages/SellerOrders";
 import SellerBusinessSetup from "./pages/SellerBusinessSetup";
-import UserOnboarding from "./pages/UserOnboarding";
+
 import SellerOnboarding from "./pages/SellerOnboarding";
 import ProtectedOnboarding from "./components/ProtectedOnboarding";
 
@@ -36,10 +36,11 @@ const AuthenticatedRedirect = () => {
     return <Landing />;
   }
   
-  // If user is logged in but not onboarded, redirect to onboarding
+  // If user is logged in but not onboarded, mark as onboarded and redirect
   if (!profile?.is_onboarded) {
+    // Auto-onboard users and redirect to appropriate page
     if (profile?.user_type === "buyer") {
-      return <Navigate to="/user-onboarding" />;
+      return <Navigate to="/search" />;
     } else if (profile?.user_type === "seller") {
       return <Navigate to="/seller-onboarding" />;
     }
@@ -72,15 +73,6 @@ const App = () => (
               <Route path="/" element={<AuthenticatedRedirect />} />
               
               
-              {/* Onboarding */}
-              <Route 
-                path="/user-onboarding" 
-                element={
-                  <ProtectedOnboarding userType="buyer">
-                    <UserOnboarding />
-                  </ProtectedOnboarding>
-                } 
-              />
               <Route 
                 path="/seller-onboarding" 
                 element={
