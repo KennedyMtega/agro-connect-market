@@ -112,8 +112,8 @@ const UserOnboarding = () => {
       }
 
       toast.success("Account created successfully! Welcome to AgroConnect!");
-      // Navigate to profile completion immediately after sign-up
-      navigate("/user-onboarding");
+      // Navigate directly to search page for buyers
+      navigate("/search");
     } catch (error) {
       console.error('Sign up error:', error);
       toast.error("An unexpected error occurred. Please try again.");
