@@ -42,7 +42,7 @@ const Landing = () => {
   
   const selectUserPath = (userType: 'buyer' | 'seller') => {
     if (userType === 'buyer') {
-      navigate("/user-onboarding");
+      navigate("/buyer-auth");
     } else {
       navigate("/seller-onboarding");
     }

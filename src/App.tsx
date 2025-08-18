@@ -21,6 +21,7 @@ import SellerOrders from "./pages/SellerOrders";
 import SellerBusinessSetup from "./pages/SellerBusinessSetup";
 
 import SellerOnboarding from "./pages/SellerOnboarding";
+import BuyerAuth from "./pages/BuyerAuth";
 import ProtectedOnboarding from "./components/ProtectedOnboarding";
 
 // Redirect component for authenticated users
@@ -73,6 +74,14 @@ const App = () => (
               <Route path="/" element={<AuthenticatedRedirect />} />
               
               
+              <Route 
+                path="/buyer-auth" 
+                element={
+                  <ProtectedOnboarding userType="buyer">
+                    <BuyerAuth />
+                  </ProtectedOnboarding>
+                } 
+              />
               <Route 
                 path="/seller-onboarding" 
                 element={
