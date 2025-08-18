@@ -91,17 +91,19 @@ const UserOnboarding = () => {
         return;
       }
 
-      // Use the real email provided by user for auth, but also store for profile
+      // Use phone number as the email for authentication (unique identifier)
+      const authEmail = `${formattedPhone.replace('+', '')}@agroconnect.tz`;
+      
       const { data, error } = await supabase.auth.signUp({
-        email: signUpData.email.trim(),
+        email: authEmail,
         password: signUpData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/user-onboarding`,
+          emailRedirectTo: `${window.location.origin}/search`,
           data: {
             phone_number: formattedPhone,
-            full_name: signUpData.fullName,
+            full_name: signUpData.fullName.trim(),
             user_type: 'buyer',
-            email: signUpData.email.trim(), // Store email in metadata for profile
+            real_email: signUpData.email.trim(), // Store real email separately
           },
         },
       });
@@ -135,52 +137,26 @@ const UserOnboarding = () => {
 
       const formattedPhone = formatTzPhone(signInData.phone);
       
-      // First, get the profile to verify it's a buyer and get email info
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, user_type, email')
-        .eq('phone_number', formattedPhone)
-        .maybeSingle();
-
-      if (!profileData) {
-        toast.error("No account found with this phone number. Please sign up first.");
-        return;
-      }
-
-      if (profileData.user_type !== 'buyer') {
-        toast.error("This phone number is registered for sellers. Please use the seller login.");
-        return;
-      }
-
-      // Sign in with the user's email (all accounts should have real emails)
-      if (!profileData.email) {
-        toast.error("Account email not found. Please contact support.");
-        return;
-      }
+      // Use phone number as email for authentication
+      const authEmail = `${formattedPhone.replace('+', '')}@agroconnect.tz`;
       
+      // Sign in directly with the constructed email and password
       const { error } = await supabase.auth.signInWithPassword({
-        email: profileData.email,
+        email: authEmail,
         password: signInData.password,
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error("Invalid phone number or password. Please check your credentials.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
       toast.success("Welcome back!");
-      // Check if user is onboarded and route accordingly
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('is_onboarded')
-        .eq('id', profileData.id)
-        .single();
-      
-      if (currentProfile?.is_onboarded) {
-        navigate("/search");
-      } else {
-        navigate("/user-onboarding");
-      }
+      navigate("/search");
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error("An unexpected error occurred. Please try again.");
