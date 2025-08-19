@@ -22,6 +22,8 @@ import SellerBusinessSetup from "./pages/SellerBusinessSetup";
 import UserOnboarding from "./pages/UserOnboarding";
 import SellerOnboarding from "./pages/SellerOnboarding";
 import ProtectedOnboarding from "./components/ProtectedOnboarding";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Redirect component for authenticated users
 const AuthenticatedRedirect = () => {
@@ -167,6 +169,10 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              
+              {/* Admin routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               
               {/* Catch-all for 404 */}
               <Route path="*" element={<NotFound />} />
