@@ -81,7 +81,7 @@ export const AnalyticsDashboard = () => {
       ]);
 
       const totalRevenue = ordersResult.data?.reduce((sum, order) => 
-        sum + (parseFloat(order.total_amount) || 0), 0) || 0;
+        sum + (Number(order.total_amount) || 0), 0) || 0;
 
       setStats({
         ...mockData,
