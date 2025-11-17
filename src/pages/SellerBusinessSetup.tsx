@@ -76,13 +76,13 @@ const SellerBusinessSetup = () => {
           store_location: businessData.storeLocation,
           store_location_lat: businessData.storeLocationLat,
           store_location_lng: businessData.storeLocationLng,
-          owner_name: businessData.ownerName,
-          owner_phone: businessData.ownerPhone,
-          owner_email: businessData.ownerEmail,
-          owner_id_number: businessData.ownerIdNumber,
-          brela_certificate: businessData.brelaCertificate,
-          business_certificate: businessData.businessCertificate,
-          tin_certificate: businessData.tinCertificate,
+          phone_number: businessData.ownerPhone || profile?.phone_number || "",
+          business_registration_number: businessData.ownerIdNumber,
+          verification_documents: {
+            brela_certificate: businessData.brelaCertificate,
+            business_certificate: businessData.businessCertificate,
+            tin_certificate: businessData.tinCertificate,
+          },
         }, {
           onConflict: 'user_id'
         })

@@ -226,11 +226,11 @@ const OrderTrackingCard: React.FC<OrderTrackingCardProps> = ({
         )}
 
         {/* Recent Updates */}
-        {tracking?.status_updates && tracking.status_updates.length > 0 && (
+        {tracking?.status_history && Array.isArray(tracking.status_history) && tracking.status_history.length > 0 && (
           <div>
             <h3 className="font-medium mb-3">Recent Updates</h3>
             <div className="space-y-2">
-              {tracking.status_updates.slice(-3).reverse().map((update: any, index: number) => (
+              {tracking.status_history.slice(-3).reverse().map((update: any, index: number) => (
                 <div key={index} className="flex items-start gap-2 text-sm">
                   <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
                   <div>

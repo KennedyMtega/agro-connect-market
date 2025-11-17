@@ -261,6 +261,13 @@ const SellerOnboarding = () => {
       // Get user's email from Supabase auth
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Get the user's phone number from profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('id', user?.id)
+        .single();
+      
       // Update user profile to mark as onboarded
       const { error: profileError } = await supabase
         .from('profiles')
@@ -271,15 +278,20 @@ const SellerOnboarding = () => {
 
       if (profileError) throw profileError;
 
-      // Create seller profile
+      // Create seller profile with proper location data
       const { error: sellerError } = await supabase
         .from('seller_profiles')
         .insert({
           user_id: user?.id,
           business_name: businessData.businessName,
           business_description: businessData.businessDescription,
-          business_license: businessData.businessLicense,
+          phone_number: profileData?.phone_number || '',
+          business_registration_number: businessData.businessLicense,
           delivery_radius_km: businessData.deliveryRadius,
+          verification_status: 'pending',
+          store_location: 'To be updated',
+          store_location_lat: 0,
+          store_location_lng: 0,
         });
 
       if (sellerError) throw sellerError;
