@@ -36,7 +36,10 @@ const AdminLogin = () => {
           description: "Welcome to AgroConnect Admin Panel",
         });
         
-        navigate("/admin/dashboard");
+        // Small delay to ensure localStorage is written
+        setTimeout(() => {
+          navigate("/admin/dashboard", { replace: true });
+        }, 100);
       } else {
         toast({
           title: "Invalid Credentials",
