@@ -30,11 +30,20 @@ export type DeliveryTracking = Database['public']['Tables']['delivery_tracking']
 export type DeliveryTrackingInsert = Database['public']['Tables']['delivery_tracking']['Insert'];
 export type DeliveryTrackingUpdate = Database['public']['Tables']['delivery_tracking']['Update'];
 
+export type Review = Database['public']['Tables']['reviews']['Row'];
+export type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
+export type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
+
+export type ReviewHelpful = Database['public']['Tables']['review_helpful']['Row'];
+
+export type AdminUser = Database['public']['Tables']['admin_users']['Row'];
+
 // Enums
 export type UserType = Database['public']['Enums']['user_type'];
 export type VerificationStatus = Database['public']['Enums']['verification_status'];
 export type OrderStatus = Database['public']['Enums']['order_status'];
 export type NotificationType = Database['public']['Enums']['notification_type'];
+export type AppRole = Database['public']['Enums']['app_role'];
 
 // Extended types for UI
 export interface CropWithSeller extends Crop {
