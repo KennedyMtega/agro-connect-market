@@ -1,24 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export interface DeliveryTracking {
-  id: string;
-  order_id: string;
-  driver_name?: string;
-  driver_phone?: string;
-  current_lat?: number;
-  current_lng?: number;
-  estimated_arrival?: string;
-  distance_to_destination?: number;
-  status_updates: any[];
-  vehicle_details?: any;
-  created_at: string;
-  updated_at: string;
-}
+import { DeliveryTracking as DbDeliveryTracking } from '@/types/database';
 
 export const useDeliveryTracking = (orderId?: string) => {
-  const [tracking, setTracking] = useState<DeliveryTracking | null>(null);
+  const [tracking, setTracking] = useState<DbDeliveryTracking | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -33,16 +19,17 @@ export const useDeliveryTracking = (orderId?: string) => {
       
       const trackingData = {
         order_id: orderId,
+        current_status: 'confirmed' as const,
         driver_name: driverInfo?.name || 'Delivery Driver',
         driver_phone: driverInfo?.phone || '+255000000000',
         estimated_arrival: estimatedArrival.toISOString(),
-        status_updates: [{
+        status_history: [{
           timestamp: new Date().toISOString(),
           status: 'order_confirmed',
           message: 'Order confirmed and preparing for delivery',
           location: 'Seller Location'
         }],
-        vehicle_details: {
+        vehicle_info: {
           type: 'motorcycle',
           plate_number: 'MC-' + Math.random().toString(36).substr(2, 6).toUpperCase()
         }
@@ -56,10 +43,8 @@ export const useDeliveryTracking = (orderId?: string) => {
 
       if (error) throw error;
       
-      // Type assertion for the returned data
-      const trackingResult = data as DeliveryTracking;
-      setTracking(trackingResult);
-      return trackingResult;
+      setTracking(data);
+      return data;
     } catch (err) {
       console.error('Error creating delivery tracking:', err);
       setError('Failed to create delivery tracking');
@@ -92,16 +77,24 @@ export const useDeliveryTracking = (orderId?: string) => {
         coordinates
       };
 
-      const updatedStatusUpdates = [...tracking.status_updates, newStatusUpdate];
+      const updatedStatusHistory = [
+        ...(Array.isArray(tracking.status_history) ? tracking.status_history : []),
+        newStatusUpdate
+      ];
       
       const updateData: any = {
-        status_updates: updatedStatusUpdates,
+        status_history: updatedStatusHistory,
+        current_status: status as any,
         updated_at: new Date().toISOString()
       };
 
       if (coordinates) {
         updateData.current_lat = coordinates.lat;
         updateData.current_lng = coordinates.lng;
+      }
+      
+      if (location) {
+        updateData.current_address = location;
       }
 
       const { data, error } = await supabase
@@ -113,10 +106,8 @@ export const useDeliveryTracking = (orderId?: string) => {
 
       if (error) throw error;
       
-      // Type assertion for the returned data
-      const trackingResult = data as DeliveryTracking;
-      setTracking(trackingResult);
-      return trackingResult;
+      setTracking(data);
+      return data;
     } catch (err) {
       console.error('Error updating delivery status:', err);
       toast({
@@ -144,7 +135,7 @@ export const useDeliveryTracking = (orderId?: string) => {
       }
       
       // Type assertion for the returned data
-      setTracking((data as DeliveryTracking) || null);
+      setTracking((data as DbDeliveryTracking) || null);
     } catch (err) {
       console.error('Error fetching delivery tracking:', err);
       setError('Failed to load delivery tracking');
@@ -172,7 +163,7 @@ export const useDeliveryTracking = (orderId?: string) => {
           console.log('Delivery tracking update:', payload);
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
             // Type assertion for real-time updates
-            setTracking(payload.new as DeliveryTracking);
+            setTracking(payload.new as DbDeliveryTracking);
           }
         }
       )

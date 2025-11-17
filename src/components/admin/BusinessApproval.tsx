@@ -44,26 +44,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface SellerProfile {
-  id: string;
-  user_id: string;
-  business_name: string;
-  business_description: string;
-  owner_name: string;
-  owner_phone: string;
-  owner_email: string;
-  business_number: string;
-  verification_status: "pending" | "verified" | "rejected";
-  store_location: string;
-  brela_certificate: string;
-  business_license: string;
-  business_certificate: string;
-  tin_certificate: string;
-  created_at: string;
-  average_rating: number;
-  total_ratings: number;
-}
+import { SellerProfile } from "@/types/database";
 
 export const BusinessApproval = () => {
   const [sellers, setSellers] = useState<SellerProfile[]>([]);
@@ -191,7 +172,7 @@ export const BusinessApproval = () => {
             <div className="space-y-2 text-sm">
               <div><strong>Business Name:</strong> {seller.business_name}</div>
               <div><strong>Description:</strong> {seller.business_description}</div>
-              <div><strong>Registration Number:</strong> {seller.business_number}</div>
+              <div><strong>Registration Number:</strong> {seller.business_registration_number || 'N/A'}</div>
               <div><strong>Location:</strong> {seller.store_location}</div>
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-yellow-500" />
@@ -201,22 +182,21 @@ export const BusinessApproval = () => {
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold">Owner Information</h4>
+            <h4 className="font-semibold">Contact Information</h4>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <span><strong>Name:</strong> {seller.owner_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{seller.owner_phone}</span>
+                <span>{seller.phone_number}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>{seller.owner_email}</span>
-              </div>
+              {seller.whatsapp_number && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-green-500" />
+                  <span>WhatsApp: {seller.whatsapp_number}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>Applied {new Date(seller.created_at).toLocaleDateString()}</span>
+                <span>Applied {new Date(seller.created_at || '').toLocaleDateString()}</span>
               </div>
             </div>
           </div>
@@ -224,13 +204,16 @@ export const BusinessApproval = () => {
 
         {/* Documents */}
         <div className="space-y-4">
-          <h4 className="font-semibold">Required Documents</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DocumentViewer url={seller.brela_certificate} type="BRELA Certificate" />
-            <DocumentViewer url={seller.business_license} type="Business License" />
-            <DocumentViewer url={seller.business_certificate} type="Business Certificate" />
-            <DocumentViewer url={seller.tin_certificate} type="TIN Certificate" />
-          </div>
+          <h4 className="font-semibold">Verification Documents</h4>
+          {seller.verification_documents && typeof seller.verification_documents === 'object' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(seller.verification_documents as Record<string, any>).map(([key, value]) => (
+                <DocumentViewer key={key} url={value as string} type={key.replace(/_/g, ' ').toUpperCase()} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No documents uploaded</p>
+          )}
         </div>
 
         {/* Approval Actions */}
@@ -368,8 +351,8 @@ export const BusinessApproval = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{seller.owner_name}</div>
-                          <div className="text-sm text-muted-foreground">{seller.owner_phone}</div>
+                          <div className="font-medium">{seller.business_name}</div>
+                          <div className="text-sm text-muted-foreground">{seller.phone_number}</div>
                         </div>
                       </TableCell>
                       <TableCell>
