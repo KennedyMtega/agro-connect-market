@@ -40,9 +40,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
+
+      // Profile might not exist yet if trigger hasn't run
+      if (!profileData) {
+        console.log('Profile not found, it may be created shortly by trigger');
+        return;
+      }
+
       setProfile(profileData);
 
       // If user is a seller, fetch seller profile
@@ -51,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .from('seller_profiles')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
         if (!sellerError && sellerData) {
           setSellerProfile(sellerData);
