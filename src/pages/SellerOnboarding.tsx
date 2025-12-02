@@ -370,6 +370,21 @@ const SellerOnboarding = () => {
                   <div className="text-center text-sm text-gray-500 mt-4">
                     Business location will be set when you start selling
                   </div>
+                  
+                  {/* Testing mode skip button */}
+                  <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      className="w-full text-orange-600 border-orange-300 hover:bg-orange-50"
+                      onClick={() => setCurrentStep(2)}
+                    >
+                      Skip for Testing <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <p className="text-xs text-orange-500 text-center mt-2">
+                      Development only - bypasses email verification
+                    </p>
+                  </div>
                 </CardContent>
               </>
           ) : (
