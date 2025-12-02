@@ -115,13 +115,20 @@ const UserOnboarding = () => {
 
       // Mark buyer as onboarded immediately since they don't need additional setup
       if (data.user) {
-        await supabase
+        // Wait a bit for trigger to create profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ 
             is_onboarded: true,
             email: signUpData.email.trim()
           })
           .eq('id', data.user.id);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+        }
       }
 
       toast.success("Account created successfully! Welcome to AgroConnect!");
@@ -168,17 +175,26 @@ const UserOnboarding = () => {
 
       // Ensure buyer is marked as onboarded
       if (data.user) {
-        const { data: profileData } = await supabase
+        // Wait for profile to be available
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('is_onboarded')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
-        if (!profileData?.is_onboarded) {
-          await supabase
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData && !profileData.is_onboarded) {
+          const { error: updateError } = await supabase
             .from('profiles')
             .update({ is_onboarded: true })
             .eq('id', data.user.id);
+          
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+          }
         }
       }
 

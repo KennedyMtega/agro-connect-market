@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -48,8 +48,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // Profile might not exist yet if trigger hasn't run
+      if (!profileData && retryCount < 3) {
+        console.log(`Profile not found, retrying... (attempt ${retryCount + 1}/3)`);
+        // Wait 500ms and retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return fetchProfile(userId, retryCount + 1);
+      }
+
       if (!profileData) {
-        console.log('Profile not found, it may be created shortly by trigger');
+        console.error('Profile not found after retries');
         return;
       }
 
