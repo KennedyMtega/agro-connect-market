@@ -46,12 +46,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SellerProfile } from "@/types/database";
 
+interface SellerWithOwner extends SellerProfile {
+  owner_name?: string;
+  owner_email?: string;
+}
+
 export const BusinessApproval = () => {
-  const [sellers, setSellers] = useState<SellerProfile[]>([]);
+  const [sellers, setSellers] = useState<SellerWithOwner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedSeller, setSelectedSeller] = useState<SellerProfile | null>(null);
+  const [selectedSeller, setSelectedSeller] = useState<SellerWithOwner | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [activeTab, setActiveTab] = useState("pending");
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,14 +67,40 @@ export const BusinessApproval = () => {
   const fetchSellers = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      // Fetch seller profiles with owner info from profiles table
+      const { data: sellerData, error: sellerError } = await supabase
         .from("seller_profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setSellers(data || []);
+      if (sellerError) throw sellerError;
+
+      // Fetch owner profiles
+      if (sellerData && sellerData.length > 0) {
+        const userIds = sellerData.map(s => s.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Merge seller data with owner info
+        const sellersWithOwners = sellerData.map(seller => {
+          const ownerProfile = profilesData?.find(p => p.id === seller.user_id);
+          return {
+            ...seller,
+            owner_name: ownerProfile?.full_name || "Unknown",
+            owner_email: ownerProfile?.email || null,
+          };
+        });
+
+        setSellers(sellersWithOwners);
+      } else {
+        setSellers([]);
+      }
     } catch (error) {
+      console.error("Error fetching sellers:", error);
       toast({
         title: "Error",
         description: "Failed to fetch seller profiles",
@@ -80,36 +112,44 @@ export const BusinessApproval = () => {
   };
 
   const handleApproval = async (sellerId: string, status: "verified" | "rejected") => {
+    // Store previous state for optimistic update rollback
+    const previousSellers = [...sellers];
+    const previousNotes = reviewNotes;
+    
+    // Optimistic update
+    setSellers(prev => prev.map(s => 
+      s.id === sellerId ? { ...s, verification_status: status } : s
+    ));
+    setProcessingId(sellerId);
+    
     try {
       const { error } = await supabase
         .from("seller_profiles")
-        .update({ verification_status: status })
+        .update({ 
+          verification_status: status,
+          verification_notes: status === "rejected" ? reviewNotes : null
+        })
         .eq("id", sellerId);
 
       if (error) throw error;
-
-      // Log the action
-      await supabase.from("business_verification_logs").insert({
-        seller_profile_id: sellerId,
-        admin_id: "admin-1", // In real app, get from admin context
-        action: status === "verified" ? "APPROVED" : "REJECTED",
-        new_status: status,
-        notes: reviewNotes,
-      });
 
       toast({
         title: "Success",
         description: `Business ${status === "verified" ? "approved" : "rejected"} successfully`,
       });
 
-      fetchSellers();
       setReviewNotes("");
     } catch (error) {
+      console.error("Approval error:", error);
+      // Rollback on error
+      setSellers(previousSellers);
       toast({
         title: "Error",
-        description: "Failed to update business status",
+        description: "Failed to update business status. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -351,8 +391,11 @@ export const BusinessApproval = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{seller.business_name}</div>
+                          <div className="font-medium">{seller.owner_name}</div>
                           <div className="text-sm text-muted-foreground">{seller.phone_number}</div>
+                          {seller.owner_email && (
+                            <div className="text-xs text-muted-foreground">{seller.owner_email}</div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

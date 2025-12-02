@@ -61,6 +61,17 @@ const SellerBusinessSetup = () => {
       return;
     }
 
+    // Validate location coordinates are set
+    if (!businessData.storeLocationLat || !businessData.storeLocationLng || 
+        (businessData.storeLocationLat === 0 && businessData.storeLocationLng === 0)) {
+      toast({
+        title: "Location Required",
+        description: "Please select your business location on the map. This is required for buyers to find you.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Use upsert to handle both insert and update in one operation

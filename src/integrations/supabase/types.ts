@@ -753,6 +753,21 @@ export type Database = {
         Returns: boolean
       }
       get_admin_dashboard_stats: { Args: never; Returns: Json }
+      get_featured_crops: {
+        Args: never
+        Returns: {
+          business_name: string
+          description: string
+          id: string
+          images: string[]
+          name: string
+          price_per_unit: number
+          quantity_available: number
+          seller_id: string
+          store_location: string
+          unit: string
+        }[]
+      }
       get_seller_reviews: {
         Args: { _limit?: number; _offset?: number; _seller_id: string }
         Returns: {
@@ -771,6 +786,23 @@ export type Database = {
         }[]
       }
       get_user_seller_id: { Args: { _user_id: string }; Returns: string }
+      get_verified_sellers_by_ids: {
+        Args: { seller_ids: string[] }
+        Returns: {
+          average_rating: number
+          business_description: string
+          business_name: string
+          delivery_radius_km: number
+          has_whatsapp: boolean
+          id: string
+          store_location: string
+          store_location_lat: number
+          store_location_lng: number
+          total_ratings: number
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
       get_verified_sellers_public: {
         Args: never
         Returns: {
@@ -794,6 +826,23 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_verified_sellers_public: {
+        Args: { search_query: string }
+        Returns: {
+          average_rating: number
+          business_description: string
+          business_name: string
+          delivery_radius_km: number
+          has_whatsapp: boolean
+          id: string
+          store_location: string
+          store_location_lat: number
+          store_location_lng: number
+          total_ratings: number
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
       }
     }
     Enums: {
