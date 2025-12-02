@@ -72,7 +72,7 @@ const Cart = () => {
 
   if (isCheckingOut) {
     return (
-      <Layout>
+      <Layout hideFooter>
         <div className="container py-12">
           <div className="max-w-md mx-auto text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -88,7 +88,7 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <Layout>
+      <Layout hideFooter>
         <div className="container py-12">
           <div className="max-w-md mx-auto text-center">
             <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -106,7 +106,7 @@ const Cart = () => {
   }
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container py-6">
         <h1 className="text-3xl font-bold tracking-tight mb-6">Shopping Cart</h1>
         

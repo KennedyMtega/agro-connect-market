@@ -111,7 +111,7 @@ const SellerBusinessSetup = () => {
   };
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container max-w-2xl py-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center text-green-700 font-bold text-2xl mb-4">

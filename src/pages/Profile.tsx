@@ -120,7 +120,7 @@ const Profile = () => {
 
   if (!user || !profile) {
     return (
-      <Layout>
+      <Layout hideFooter>
         <div className="container py-6">
           <div className="text-center">Loading profile...</div>
         </div>
@@ -129,7 +129,7 @@ const Profile = () => {
   }
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container py-6 max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Profile</h1>

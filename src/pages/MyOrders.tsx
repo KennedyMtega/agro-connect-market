@@ -73,7 +73,7 @@ const MyOrders = () => {
   const displayedOrders = filterOrders(orders);
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container py-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>

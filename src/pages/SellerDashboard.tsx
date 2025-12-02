@@ -45,7 +45,7 @@ const SellerDashboard = () => {
   const activeBuyers = new Set(orders.map(o => o.buyer_id)).size;
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container py-6">
         <div className="flex items-start justify-between mb-6">
           <div>
