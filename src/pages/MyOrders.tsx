@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, Search, Filter, RefreshCw } from "lucide-react";
+import { Package, Search, Filter, RefreshCw, ShoppingBag } from "lucide-react";
 import { useBuyerOrders } from "@/hooks/useBuyerOrders";
 import OrderTrackingCard from "@/components/orders/OrderTrackingCard";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MyOrders = () => {
   const { orders, loading, refetch } = useBuyerOrders();
@@ -117,9 +118,34 @@ const MyOrders = () => {
           <TabsContent value={activeTab} className="space-y-4">
             <div className="space-y-6">
               {loading ? (
-                <div className="text-center py-8">
-                  <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground animate-pulse" />
-                  <p>Loading your orders...</p>
+                // Skeleton loading cards
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="space-y-2">
+                            <Skeleton className="h-5 w-32" />
+                            <Skeleton className="h-4 w-24" />
+                          </div>
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-12 w-12 rounded" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-40" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-9 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : displayedOrders.length > 0 ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
@@ -133,17 +159,27 @@ const MyOrders = () => {
                 </div>
               ) : (
                 <Card>
-                  <CardContent className="p-8 text-center">
-                    <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <CardContent className="p-12 text-center">
+                    <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                     <h3 className="text-lg font-medium mb-2">No orders found</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
                       {searchQuery 
                         ? "Try adjusting your search query" 
-                        : `You don't have any ${activeTab === "all" ? "" : activeTab + " "}orders yet`}
+                        : activeTab === "active" 
+                          ? "You don't have any active orders. Your in-progress orders will appear here."
+                          : activeTab === "completed"
+                            ? "You don't have any completed orders yet."
+                            : "You haven't placed any orders yet. Start exploring fresh produce from local farmers!"}
                     </p>
-                    <Button onClick={() => window.location.href = "/search"}>
-                      Start Shopping
-                    </Button>
+                    {searchQuery ? (
+                      <Button variant="outline" onClick={() => setSearchQuery("")}>
+                        Clear Search
+                      </Button>
+                    ) : (
+                      <Button onClick={() => window.location.href = "/search"}>
+                        Browse Fresh Produce
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               )}

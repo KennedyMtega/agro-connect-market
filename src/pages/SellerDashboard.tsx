@@ -29,6 +29,7 @@ import { useSellerCrops } from "@/hooks/useSellerCrops";
 import { useSellerOrders } from "@/hooks/useSellerOrders";
 import { useSellerNotifications } from "@/hooks/useSellerNotifications";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SellerDashboard = () => {
   const { user, profile, sellerProfile } = useAuth();
@@ -159,7 +160,15 @@ const SellerDashboard = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {ordersLoading ? (
-                      <div className="text-center py-8">Loading orders...</div>
+                      [...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                      ))
                     ) : orders.length > 0 ? (
                       orders.slice(0, 5).map((order) => (
                         <div key={order.id} className="flex items-center justify-between p-3 rounded-lg border">
@@ -195,7 +204,18 @@ const SellerDashboard = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {cropsLoading ? (
-                      <div className="text-center py-8">Loading inventory...</div>
+                      [...Array(3)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                          <div className="text-right space-y-2">
+                            <Skeleton className="h-4 w-20 ml-auto" />
+                            <Skeleton className="h-5 w-16 rounded-full ml-auto" />
+                          </div>
+                        </div>
+                      ))
                     ) : crops.length > 0 ? (
                       crops.slice(0, 5).map((crop) => (
                         <div key={crop.id} className="flex items-center justify-between p-3 rounded-lg border">
@@ -256,7 +276,16 @@ const SellerDashboard = () => {
                   </div>
                   
                   {ordersLoading ? (
-                    <div className="text-center py-8 border-t">Loading orders...</div>
+                    [...Array(4)].map((_, i) => (
+                      <div key={i} className="grid grid-cols-6 p-3 border-t">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
+                    ))
                   ) : orders.length > 0 ? (
                     orders.map((order) => (
                       <div key={order.id} className="grid grid-cols-6 p-3 border-t text-sm">
@@ -323,7 +352,16 @@ const SellerDashboard = () => {
                   </div>
                   
                   {cropsLoading ? (
-                    <div className="text-center py-8 border-t">Loading inventory...</div>
+                    [...Array(4)].map((_, i) => (
+                      <div key={i} className="grid grid-cols-6 p-3 border-t">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-8 w-8" />
+                      </div>
+                    ))
                   ) : crops.length > 0 ? (
                     crops.map((crop) => (
                       <div key={crop.id} className="grid grid-cols-6 p-3 border-t text-sm">
