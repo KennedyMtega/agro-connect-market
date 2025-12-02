@@ -86,17 +86,22 @@ export const useSellerCrops = () => {
   };
 
   const updateCrop = async (id: string, updates: Partial<Crop>) => {
+    // Store previous state for rollback
+    const previousCrops = [...crops];
+    
+    // Optimistic update - immediately update UI
+    setCrops(prev => prev.map(crop => 
+      crop.id === id ? { ...crop, ...updates, updated_at: new Date().toISOString() } : crop
+    ));
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('crops')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id);
 
       if (error) throw error;
       
-      setCrops(prev => prev.map(crop => crop.id === id ? { ...crop, ...data } : crop));
       toast({
         title: "Crop Updated",
         description: "Your crop has been updated successfully.",
@@ -104,6 +109,10 @@ export const useSellerCrops = () => {
       return true;
     } catch (err) {
       console.error('Error updating crop:', err);
+      
+      // Rollback to previous state
+      setCrops(previousCrops);
+      
       toast({
         title: "Error",
         description: "Failed to update crop. Please try again.",
@@ -114,6 +123,13 @@ export const useSellerCrops = () => {
   };
 
   const deleteCrop = async (id: string) => {
+    // Store previous state for rollback
+    const previousCrops = [...crops];
+    const deletedCrop = crops.find(c => c.id === id);
+    
+    // Optimistic update - immediately remove from UI
+    setCrops(prev => prev.filter(crop => crop.id !== id));
+    
     try {
       const { error } = await supabase
         .from('crops')
@@ -122,7 +138,6 @@ export const useSellerCrops = () => {
 
       if (error) throw error;
       
-      setCrops(prev => prev.filter(crop => crop.id !== id));
       toast({
         title: "Crop Deleted",
         description: "Your crop has been deleted successfully.",
@@ -130,6 +145,10 @@ export const useSellerCrops = () => {
       return true;
     } catch (err) {
       console.error('Error deleting crop:', err);
+      
+      // Rollback - restore deleted crop
+      setCrops(previousCrops);
+      
       toast({
         title: "Error",
         description: "Failed to delete crop. Please try again.",
