@@ -14,12 +14,14 @@ import {
   Truck, 
   X, 
   Eye, 
-  ArrowUpDown
+  ArrowUpDown,
+  ShoppingBag
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSellerOrders, Order } from "@/hooks/useSellerOrders";
 import { formatTZS } from "@/utils/currency";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import OrderDetailModal from "@/components/orders/OrderDetailModal";
 
 const SellerOrders = () => {
@@ -169,10 +171,18 @@ const SellerOrders = () => {
                   </div>
                   
                   {loading ? (
-                    <div className="p-8 text-center border-t">
-                      <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p>Loading orders...</p>
-                    </div>
+                    // Skeleton loading rows
+                    [...Array(5)].map((_, i) => (
+                      <div key={i} className="grid grid-cols-7 items-center p-3 border-t">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                        <Skeleton className="h-8 w-16" />
+                      </div>
+                    ))
                   ) : displayedOrders.length > 0 ? (
                     displayedOrders.map((order) => (
                       <div 
@@ -221,14 +231,19 @@ const SellerOrders = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="p-8 text-center border-t">
-                      <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <h3 className="text-lg font-medium mb-1">No orders found</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="p-12 text-center border-t">
+                      <ShoppingBag className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                      <h3 className="text-lg font-medium mb-2">No orders found</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                         {searchQuery 
-                          ? "Try adjusting your search query" 
-                          : `You don't have any ${activeTab === "all" ? "" : activeTab + " "}orders yet`}
+                          ? "Try adjusting your search query or clearing filters" 
+                          : `You don't have any ${activeTab === "all" ? "" : activeTab.replace('_', ' ') + " "}orders yet. When buyers place orders, they'll appear here.`}
                       </p>
+                      {searchQuery && (
+                        <Button variant="outline" className="mt-4" onClick={() => setSearchQuery("")}>
+                          Clear Search
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
