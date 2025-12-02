@@ -71,30 +71,46 @@ export const useSellerOrders = () => {
   };
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
+    // Store previous state for rollback
+    const previousOrders = [...orders];
+    const previousOrder = orders.find(o => o.id === orderId);
+    
+    // Optimistic update - immediately update UI
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { ...order, status, updated_at: new Date().toISOString() } 
+        : order
+    ));
+    
+    // Show immediate feedback
+    toast({
+      title: "Updating Order...",
+      description: `Changing status to ${status.replace('_', ' ')}.`,
+    });
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('orders')
         .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', orderId)
-        .select()
-        .single();
+        .eq('id', orderId);
 
       if (error) throw error;
       
-      setOrders(prev => prev.map(order => 
-        order.id === orderId ? { ...order, ...data } : order
-      ));
-      
+      // Success - show confirmation
       toast({
         title: "Order Updated",
-        description: `Order status updated to ${status}.`,
+        description: `Order status changed to ${status.replace('_', ' ')}.`,
       });
       return true;
     } catch (err) {
       console.error('Error updating order:', err);
+      
+      // Rollback to previous state
+      setOrders(previousOrders);
+      
       toast({
-        title: "Error",
-        description: "Failed to update order status. Please try again.",
+        title: "Update Failed",
+        description: "Could not update order status. Please try again.",
         variant: "destructive",
       });
       return false;
