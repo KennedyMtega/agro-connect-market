@@ -113,9 +113,20 @@ const UserOnboarding = () => {
         return;
       }
 
+      // Mark buyer as onboarded immediately since they don't need additional setup
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            is_onboarded: true,
+            email: signUpData.email.trim()
+          })
+          .eq('id', data.user.id);
+      }
+
       toast.success("Account created successfully! Welcome to AgroConnect!");
       // Navigate directly to search page for buyers
-      navigate("/search");
+      navigate("/search", { replace: true });
     } catch (error) {
       console.error('Sign up error:', error);
       toast.error("An unexpected error occurred. Please try again.");
@@ -141,7 +152,7 @@ const UserOnboarding = () => {
       const authEmail = `${formattedPhone.replace('+', '')}@agroconnect.tz`;
       
       // Sign in directly with the constructed email and password
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password: signInData.password,
       });
@@ -155,8 +166,24 @@ const UserOnboarding = () => {
         return;
       }
 
+      // Ensure buyer is marked as onboarded
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_onboarded')
+          .eq('id', data.user.id)
+          .single();
+
+        if (!profileData?.is_onboarded) {
+          await supabase
+            .from('profiles')
+            .update({ is_onboarded: true })
+            .eq('id', data.user.id);
+        }
+      }
+
       toast.success("Welcome back!");
-      navigate("/search");
+      navigate("/search", { replace: true });
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error("An unexpected error occurred. Please try again.");
