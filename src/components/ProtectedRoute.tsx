@@ -1,8 +1,7 @@
 
-import { ReactNode, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,19 +10,6 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredUserType }) => {
   const { user, profile, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  // Use useEffect at top level to avoid conditional hooks
-  useEffect(() => {
-    if (requiredUserType && profile?.user_type !== requiredUserType && !isLoading && user) {
-      toast({
-        title: "Access Restricted",
-        description: `This area is only accessible to ${requiredUserType}s.`,
-        variant: "destructive",
-      });
-    }
-  }, [requiredUserType, profile?.user_type, isLoading, user, toast]);
 
   // Show loading or placeholder while checking authentication
   if (isLoading) {
