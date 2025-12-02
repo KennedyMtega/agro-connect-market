@@ -76,6 +76,7 @@ export const FeaturedCropsBar = () => {
     }
   };
 
+  // Always show the bar - show loading state, then crops or "no featured" message
   if (loading) {
     return (
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t shadow-lg">
@@ -98,8 +99,21 @@ export const FeaturedCropsBar = () => {
     );
   }
 
+  // Show message when no featured crops available
   if (crops.length === 0) {
-    return null;
+    return (
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t shadow-lg">
+        <div className="p-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-yellow-500" />
+            <span className="font-semibold text-sm">Featured Crops</span>
+            <Badge variant="secondary" className="text-xs">
+              No featured crops available
+            </Badge>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

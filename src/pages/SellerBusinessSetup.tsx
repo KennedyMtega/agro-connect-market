@@ -202,18 +202,50 @@ const SellerBusinessSetup = () => {
               </div>
 
               {/* Location Picker */}
-              <LocationPicker 
-                onLocationSelect={handleLocationSelect}
-                currentLocation={
-                  businessData.storeLocationLat && businessData.storeLocationLng 
-                    ? {
-                        lat: businessData.storeLocationLat,
-                        lng: businessData.storeLocationLng,
-                        address: businessData.storeLocation
-                      }
-                    : undefined
-                }
-              />
+              <div className="space-y-3">
+                <LocationPicker 
+                  onLocationSelect={handleLocationSelect}
+                  currentLocation={
+                    businessData.storeLocationLat && businessData.storeLocationLng 
+                      ? {
+                          lat: businessData.storeLocationLat,
+                          lng: businessData.storeLocationLng,
+                          address: businessData.storeLocation
+                        }
+                      : undefined
+                  }
+                />
+                
+                {/* Sample Location Button for Testing */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed"
+                  onClick={() => {
+                    setBusinessData({
+                      ...businessData,
+                      storeLocation: "Kariakoo Market, Dar es Salaam, Tanzania",
+                      storeLocationLat: -6.8235,
+                      storeLocationLng: 39.2695,
+                    });
+                    toast({
+                      title: "Sample Location Set",
+                      description: "Using Kariakoo Market, Dar es Salaam as your business location.",
+                    });
+                  }}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Use Sample Location (Kariakoo Market, Dar es Salaam)
+                </Button>
+                
+                {businessData.storeLocationLat && businessData.storeLocationLng && (
+                  <p className="text-sm text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4" />
+                    Location set: {businessData.storeLocation}
+                  </p>
+                )}
+              </div>
 
               {/* Owner Information */}
               <div className="space-y-4 p-4 border rounded-lg">
