@@ -228,7 +228,7 @@ const Inventory = () => {
   };
 
   return (
-    <Layout>
+    <Layout hideFooter>
       <div className="container py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Inventory Management</h1>
