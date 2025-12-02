@@ -30,6 +30,7 @@ import { useSellerOrders } from "@/hooks/useSellerOrders";
 import { useSellerNotifications } from "@/hooks/useSellerNotifications";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VerificationStatusBanner } from "@/components/seller/VerificationStatusBanner";
 
 const SellerDashboard = () => {
   const { user, profile, sellerProfile } = useAuth();
@@ -48,6 +49,12 @@ const SellerDashboard = () => {
   return (
     <Layout hideFooter>
       <div className="container py-6">
+        {/* Verification Status Banner */}
+        <VerificationStatusBanner 
+          status={sellerProfile?.verification_status as "pending" | "verified" | "rejected" | null} 
+          notes={sellerProfile?.verification_notes}
+        />
+
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>

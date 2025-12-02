@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import Layout from "@/components/layout/Layout";
@@ -8,6 +7,7 @@ import BottomCard from "@/components/map/BottomCard";
 import SearchResultsDrawer from "@/components/search/SearchResultsDrawer";
 import VendorDetailsDrawer from "@/components/vendor/VendorDetailsDrawer";
 import { SearchBar } from "@/components/search/SearchBar";
+import { FeaturedCropsBar } from "@/components/search/FeaturedCropsBar";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -73,8 +73,8 @@ const Search = () => {
           />
         </div>
         
-        {/* Cart Button - Fixed at bottom right */}
-        <div className="absolute bottom-4 right-4 z-20">
+        {/* Cart Button - Fixed at bottom right, above featured crops */}
+        <div className="absolute bottom-36 right-4 z-20">
           <Button 
             onClick={handleCartClick}
             className="h-14 w-14 rounded-full bg-green-600 hover:bg-green-700 shadow-lg"
@@ -89,6 +89,9 @@ const Search = () => {
             )}
           </Button>
         </div>
+        
+        {/* Featured Crops Bar - Fixed at bottom */}
+        <FeaturedCropsBar />
         
         {/* Bottom Card for Selected Vendor */}
         <BottomCard
